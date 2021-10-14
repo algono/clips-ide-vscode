@@ -13,40 +13,44 @@ const state: {
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   const writeEmitter = new vscode.EventEmitter<string>();
+  const closeEmitter = new vscode.EventEmitter<void>();
+
   state.writeEmitter = writeEmitter;
 
-	let line = '';
+  let line = '';
   const clipsPty: vscode.Pseudoterminal = {
     onDidWrite: writeEmitter.event,
+		onDidClose: closeEmitter.event,
     open: () => {
       state.clips = spawn('clips');
       state.clips.on('error', (err) => {
-        console.error('Fatal error. Check if CLIPS is installed.');
-        console.log('Error: ', err);
+        vscode.window.showErrorMessage('Fatal error. Check if CLIPS is installed.');
+        console.error('Error: ', err);
+				closeEmitter.fire();
       });
     },
     close: () => {},
-		handleInput: data => {
-			switch (data) {
-				case '\r':
-					writeEmitter.fire('\r\n');
-					writeEmitter.fire('line: ' +  line);
-					// TODO: Run command on CLIPS, and write the result
-					break;
-				case '\x7f': // Backspace
-					if (line.length === 0) {
-						return;
-					}
-					line = line.substr(0, line.length - 1);
-					// Move cursor backwards
-					writeEmitter.fire('\x1b[D');
-					// Delete character
-					writeEmitter.fire('\x1b[P');
-					return;
-			}
-			line += data;
-			writeEmitter.fire(data);
-		}
+    handleInput: (data) => {
+      switch (data) {
+        case '\r':
+          writeEmitter.fire('\r\n');
+          writeEmitter.fire('line: ' + line);
+          // TODO: Run command on CLIPS, and write the result
+          break;
+        case '\x7f': // Backspace
+          if (line.length === 0) {
+            return;
+          }
+          line = line.substr(0, line.length - 1);
+          // Move cursor backwards
+          writeEmitter.fire('\x1b[D');
+          // Delete character
+          writeEmitter.fire('\x1b[P');
+          return;
+      }
+      line += data;
+      writeEmitter.fire(data);
+    },
   };
 
   // Use the console to output diagnostic information (console.log) and errors (console.error)
