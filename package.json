@@ -3,6 +3,7 @@
 	"displayName": "CLIPS",
 	"description": "Provides a similar experience to the CLIPS IDE inside VSCode",
 	"version": "0.0.1",
+	"private": "true",
 	"engines": {
 		"vscode": "^1.61.0"
 	},
