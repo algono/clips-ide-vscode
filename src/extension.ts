@@ -18,8 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
 	let line = '';
   const clipsPty: vscode.Pseudoterminal = {
     onDidWrite: writeEmitter.event,
-		open: () => {},
-		/*
     open: () => {
       state.clips = spawn('clips');
       state.clips.on('error', (err) => {
@@ -27,7 +25,6 @@ export function activate(context: vscode.ExtensionContext) {
         console.log('Error: ', err);
       });
     },
-			*/
     close: () => {},
 		handleInput: data => {
 			switch (data) {
