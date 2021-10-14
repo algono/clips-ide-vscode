@@ -20,13 +20,15 @@ export function activate(context: vscode.ExtensionContext) {
   let line = '';
   const clipsPty: vscode.Pseudoterminal = {
     onDidWrite: writeEmitter.event,
-		onDidClose: closeEmitter.event,
+    onDidClose: closeEmitter.event,
     open: () => {
       state.clips = spawn('clips');
       state.clips.on('error', (err) => {
-        vscode.window.showErrorMessage('Fatal error. Check if CLIPS is installed.');
+        vscode.window.showErrorMessage(
+          'Fatal error. Check if CLIPS is installed.'
+        );
         console.error('Error: ', err);
-				closeEmitter.fire();
+        closeEmitter.fire();
       });
     },
     close: () => {},
@@ -72,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
         pty: clipsPty,
       });
 
-			terminal.show();
+      terminal.show();
 
       context.subscriptions.push(terminal);
     }
