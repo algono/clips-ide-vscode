@@ -20,11 +20,13 @@ export function activate(context: vscode.ExtensionContext) {
   let line = '',
     pos = 0;
   const handleInput: (data: string) => void = (data) => {
+    console.log('LINE:', line);
     switch (data) {
       case '\r':
         writeEmitter.fire('\r\n');
         state.clips?.stdin.write(line + '\r\n');
         line = '';
+        pos = 0;
         return;
       case '\x7f': // Backspace
         if (pos === 0) {
