@@ -17,35 +17,59 @@ export function activate(context: vscode.ExtensionContext) {
 
   state.writeEmitter = writeEmitter;
 
+  let line = '', pos = 0;
   const handleInput: (data: string) => void = (data) => {
       switch (data) {
         case '\r':
           writeEmitter.fire('\r\n');      
           state.clips?.stdin.write(line + '\r\n');
           line = '';
-          break;
+          return;
         case '\x7f': // Backspace
-          if (line.length === 0) {
+          if (pos === 0) {
             return;
           }
           line = line.substr(0, line.length - 1);
-          // Move cursor backwards
+          pos--;
+          // Move cursor backward
           writeEmitter.fire('\x1b[D');
           // Delete character
           writeEmitter.fire('\x1b[P');
           return;
+        case '\x1b[A': // up arrow
+        case '\x1b[B': // down arrow
+          // CLIPS does not seem to support command history with up and down arrows
+          // so we just ignore them
+          return;
+        case '\x1b[D': // left arrow
+          if (pos === 0) {
+            return;
+          }
+          pos--;
+          break;
+        case '\x1b[C': // right arrow
+          if (pos >= line.length) {
+            return;
+          }
+          pos++;
+          break;
+        case '\x1b[3~': // del key
+          // Delete character
+          writeEmitter.fire('\x1b[P');
+          return;
+        default:
+          line += data;
+          pos += data.length;
+          break;
       }
-      line += data;
       writeEmitter.fire(data);
   };
 
-  let line = '';
   const clipsPty: vscode.Pseudoterminal = {
     onDidWrite: writeEmitter.event,
     onDidClose: closeEmitter.event,
     open: () => {
-      // TODO: ADAPT CODE TO CLIPS INSTEAD OF NODE REPL
-      state.clips = spawn('node', ['-i']);
+      state.clips = spawn('clips');
       state.clips.on('error', (err) => {
         vscode.window.showErrorMessage(
           'Fatal error. Check if CLIPS is installed.'
