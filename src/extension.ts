@@ -17,52 +17,65 @@ export function activate(context: vscode.ExtensionContext) {
 
   state.writeEmitter = writeEmitter;
 
-  let line = '', pos = 0;
+  let line = '',
+    pos = 0;
   const handleInput: (data: string) => void = (data) => {
-      switch (data) {
-        case '\r':
-          writeEmitter.fire('\r\n');      
-          state.clips?.stdin.write(line + '\r\n');
-          line = '';
+    switch (data) {
+      case '\r':
+        writeEmitter.fire('\r\n');
+        state.clips?.stdin.write(line + '\r\n');
+        line = '';
+        return;
+      case '\x7f': // Backspace
+        if (pos === 0) {
           return;
-        case '\x7f': // Backspace
-          if (pos === 0) {
-            return;
-          }
-          line = line.substr(0, line.length - 1);
-          pos--;
-          // Move cursor backward
-          writeEmitter.fire('\x1b[D');
-          // Delete character
-          writeEmitter.fire('\x1b[P');
+        }
+        line = line.substr(0, line.length - 1);
+        pos--;
+        // Move cursor backward
+        writeEmitter.fire('\x1b[D');
+        // Delete character
+        writeEmitter.fire('\x1b[P');
+        return;
+      case '\x1b[A': // up arrow
+      case '\x1b[B': // down arrow
+        // CLIPS does not seem to support command history with up and down arrows
+        // so we just ignore them
+        return;
+      case '\x1b[D': // left arrow
+        if (pos === 0) {
           return;
-        case '\x1b[A': // up arrow
-        case '\x1b[B': // down arrow
-          // CLIPS does not seem to support command history with up and down arrows
-          // so we just ignore them
+        }
+        pos--;
+        break;
+      case '\x1b[C': // right arrow
+        if (pos >= line.length) {
           return;
-        case '\x1b[D': // left arrow
-          if (pos === 0) {
-            return;
-          }
-          pos--;
-          break;
-        case '\x1b[C': // right arrow
-          if (pos >= line.length) {
-            return;
-          }
-          pos++;
-          break;
-        case '\x1b[3~': // del key
-          // Delete character
-          writeEmitter.fire('\x1b[P');
-          return;
-        default:
+        }
+        pos++;
+        break;
+      case '\x1b[3~': // del key
+        // Delete character
+        writeEmitter.fire('\x1b[P');
+        return;
+      default:
+        // Support for typing characters at any position other than the end
+        if (pos < line.length) {
+          const before = line.slice(0, pos),
+            after = line.slice(pos);
+          writeEmitter.fire(data + after);
+          line = before + data + after;
+          // Move cursor back to the original position
+          writeEmitter.fire('\x1b[D'.repeat(after.length));
+        } else {
+          writeEmitter.fire(data);
           line += data;
-          pos += data.length;
-          break;
-      }
-      writeEmitter.fire(data);
+        }
+        pos += data.length;
+        return;
+    }
+
+    writeEmitter.fire(data);
   };
 
   const clipsPty: vscode.Pseudoterminal = {
@@ -79,7 +92,9 @@ export function activate(context: vscode.ExtensionContext) {
       });
       state.clips.stdout.on('data', (res) => {
         console.log('DATA: ', res.toString());
-        writeEmitter.fire('\r' + (res.toString() as string).replace('\n', '\r\n'));
+        writeEmitter.fire(
+          '\r' + (res.toString() as string).replace('\n', '\r\n')
+        );
       });
       state.clips.on('exit', () => closeEmitter.fire());
     },
