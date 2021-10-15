@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (pos === 0) {
           return;
         }
-        line = line.slice(0, pos-1) + line.slice(pos);
+        line = line.slice(0, pos - 1) + line.slice(pos);
         pos--;
         // Move cursor backward
         writeEmitter.fire('\x1b[D');
@@ -92,11 +92,14 @@ export function activate(context: vscode.ExtensionContext) {
         console.error('Error: ', err);
         closeEmitter.fire();
       });
-      state.clips.stdout.on('data', (res) => {
-        console.log('DATA: ', res.toString());
-        writeEmitter.fire(
-          '\r' + (res.toString() as string).replace('\n', '\r\n')
-        );
+      state.clips.stdout.on('data', (data) => {
+        console.log('DATA: ', JSON.stringify(data.toString()));
+
+        const res = '\r' + (data.toString() as string).replace(/\n/g, '\r\n');
+
+        console.log('RES: ', JSON.stringify(res.toString()));
+
+        writeEmitter.fire(res);
       });
       state.clips.on('exit', () => closeEmitter.fire());
     },
