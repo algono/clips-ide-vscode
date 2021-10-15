@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (pos === 0) {
           return;
         }
-        line = line.substr(0, line.length - 1);
+        line = line.slice(0, pos-1) + line.slice(pos);
         pos--;
         // Move cursor backward
         writeEmitter.fire('\x1b[D');
