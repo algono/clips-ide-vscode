@@ -57,6 +57,10 @@ export function activate(context: vscode.ExtensionContext) {
         pos++;
         break;
       case '\x1b[3~': // del key
+        if (pos >= line.length) {
+          return;
+        }
+        line = line.slice(0, pos) + line.slice(pos + 1);
         // Delete character
         writeEmitter.fire('\x1b[P');
         return;
