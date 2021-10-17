@@ -4,8 +4,12 @@ import * as vscode from 'vscode';
 
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 
+type RedirectData = [string, (data: string) => string];
+
 const state: {
   clips?: ChildProcessWithoutNullStreams;
+  ptyWriteEmitter?: vscode.EventEmitter<string>;
+  redirectWriteEmitter?: vscode.EventEmitter<RedirectData>;
   docs: {
     facts?: string;
     agenda?: string;
@@ -17,6 +21,8 @@ const state: {
 export function activate(context: vscode.ExtensionContext) {
   const writeEmitter = new vscode.EventEmitter<string>();
   const closeEmitter = new vscode.EventEmitter<void>();
+
+  state.ptyWriteEmitter = writeEmitter;
 
   let line = '',
     pos = 0;
@@ -98,13 +104,25 @@ export function activate(context: vscode.ExtensionContext) {
         closeEmitter.fire();
       });
       state.clips.stdout.on('data', (data) => {
-        console.log('DATA: ', JSON.stringify(data.toString()));
+        const sData: string = data.toString();
 
-        const res = '\r' + (data.toString() as string).replace(/\n/g, '\r\n');
+        console.log('DATA: ', JSON.stringify(sData));
 
-        console.log('RES: ', JSON.stringify(res.toString()));
+        const cleanLineBreaks = (data: string) => data.replace(/\n/g, '\r\n');
 
-        writeEmitter.fire(res);
+        if (state.redirectWriteEmitter) {
+          state.redirectWriteEmitter.fire([sData, cleanLineBreaks]);
+
+          // If the current command ended (noticed by the presence of the prompt) and there was a redirect, delete it
+          if (sData.includes('CLIPS>')) {
+            delete state.redirectWriteEmitter;
+          }
+        } else {
+          const res = cleanLineBreaks(sData);
+          console.log('RES: ', JSON.stringify(res));
+
+          writeEmitter.fire(res);
+        }
       });
       state.clips.on('exit', () => closeEmitter.fire());
     },
@@ -156,14 +174,20 @@ export function activate(context: vscode.ExtensionContext) {
 
       const uri = vscode.Uri.parse('clips:facts');
 
+      const writeCommand = (cmd: string) =>
+        state.clips?.stdin.write(cmd + '\r\n');
+      const getFacts = () => writeCommand('(facts)');
+
       setTimeout(() => {
-        state.clips?.stdout.once('data', (data) => {
+        const factsEmitter = new vscode.EventEmitter<RedirectData>();
+        factsEmitter.event(([data, cleanLineBreaks]) => {
           console.log('FACTS DATA: ' + data);
           // Removes last two lines (Summary and prompt)
-          state.docs.facts = data.toString().replace(/\n.*\n.*$/, '');
+          state.docs.facts = cleanLineBreaks(data.replace(/\n.*\n.*$/, ''));
           myProvider.onDidChangeEmitter.fire(uri);
         });
-        state.clips?.stdin.write('(facts)\r\n');
+        state.redirectWriteEmitter = factsEmitter;
+        getFacts();
       }, 500);
 
       const doc = await vscode.workspace.openTextDocument(uri);
