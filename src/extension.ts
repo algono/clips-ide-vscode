@@ -14,6 +14,7 @@ const state: {
     facts?: string;
     agenda?: string;
   };
+  terminal?: vscode.Terminal;
 } = { docs: {} };
 
 // this method is called when your extension is activated
@@ -105,7 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   })();
 
-  let docDisposable = vscode.workspace.registerTextDocumentContentProvider(
+  const docD = vscode.workspace.registerTextDocumentContentProvider(
     'clips',
     myProvider
   );
@@ -113,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  let disposable = vscode.commands.registerCommand(
+  const mainD = vscode.commands.registerCommand(
     'clips-ide.open-clips-env',
     async () => {
       // The code you place here will be executed every time your command is executed
@@ -234,13 +235,32 @@ export function activate(context: vscode.ExtensionContext) {
         pty: clipsPty,
       });
 
+      state.terminal = terminal;
+
       terminal.show();
 
       context.subscriptions.push(terminal);
     }
   );
 
-  context.subscriptions.push(disposable, docDisposable);
+  const loadD = vscode.commands.registerCommand(
+    'clips-ide.load-file',
+    async () => {
+      const files = await vscode.window.showOpenDialog();
+      if (state.terminal) {
+        files?.forEach((file) => {
+          state.terminal?.sendText(`(load ${file.fsPath})`);
+          state.terminal?.sendText('\r');
+        });
+      } else {
+        vscode.window.showErrorMessage(
+          'Error: The CLIPS terminal is not open.'
+        );
+      }
+    }
+  );
+
+  context.subscriptions.push(mainD, docD, loadD);
 }
 
 // this method is called when your extension is deactivated

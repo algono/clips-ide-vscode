@@ -11,7 +11,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:clips-ide.open-clips-env"
+		"onCommand:clips-ide.open-clips-env",
+		"onCommand:clips-ide.load-file"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -19,6 +20,10 @@
 			{
 				"command": "clips-ide.open-clips-env",
 				"title": "CLIPS: Open CLIPS Environment"
+			},
+			{
+				"command": "clips-ide.load-file",
+				"title": "CLIPS: Load File..."
 			}
 		]
 	},
