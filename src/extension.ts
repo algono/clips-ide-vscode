@@ -110,10 +110,6 @@ export function activate(context: vscode.ExtensionContext) {
     myProvider
   );
 
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  //console.log('Congratulations, your extension "clips-ide" is now active!');
-
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
@@ -121,8 +117,9 @@ export function activate(context: vscode.ExtensionContext) {
     'clips-ide.open-clips-env',
     async () => {
       // The code you place here will be executed every time your command is executed
-      // Display a message box to the user
-      //vscode.window.showInformationMessage('Hello World from CLIPS!');
+
+      // If there is a prompt inside the data, we can assume that the command output ended
+      const commandEnded = (data: string) => data.includes('CLIPS>');
 
       const factsUri = vscode.Uri.parse('clips:facts');
       const agendaUri = vscode.Uri.parse('clips:agenda');
@@ -131,18 +128,33 @@ export function activate(context: vscode.ExtensionContext) {
         state.clips?.stdin.write(cmd + '\r\n');
 
       const updateDoc = (name: keyof typeof state.docs) => {
+        // Removes last two lines (Summary and prompt)
+        const cleanDoc = ([data, cleanLineBreaks]: RedirectData): string => {
+          if (data.startsWith('CLIPS>')) {
+            return '';
+          } else {
+            const summaryIndex = data.lastIndexOf('For a total of');
+            return cleanLineBreaks(data.slice(0, summaryIndex).trimEnd());
+          }
+        };
+
         const emitter = new vscode.EventEmitter<RedirectData>();
         emitter.event(([data, cleanLineBreaks]) => {
           console.log(`DATA (${name}): ` + data);
-          // Removes last two lines (Summary and prompt)
-          if (data.startsWith('CLIPS>')) {
-            state.docs[name]= '';
-          } else {
-            const summaryIndex = data.lastIndexOf('For a total of');
-            state.docs[name] = cleanLineBreaks(data.slice(0, summaryIndex).trimEnd());
+          state.docs[name] += data;
+          if (commandEnded(data)) {
+            state.docs[name] = cleanDoc([
+              state.docs[name] ?? '',
+              cleanLineBreaks,
+            ]);
+
+            myProvider.onDidChangeEmitter.fire(
+              vscode.Uri.parse(`clips:${name}`)
+            );
           }
-          myProvider.onDidChangeEmitter.fire(vscode.Uri.parse(`clips:${name}`));
         });
+
+        state.docs[name] = '';
         state.redirectWriteEmitter = emitter;
         writeCommand(`(${name})`);
       };
@@ -193,12 +205,11 @@ export function activate(context: vscode.ExtensionContext) {
             const cleanLineBreaks = (data: string) =>
               data.replace(/\n/g, '\r\n');
 
-            // If there is a prompt inside the data, we can assume that the command output ended
-            const commandEnded = sData.includes('CLIPS>');
+            const commandHasEnded = commandEnded(sData);
 
             if (state.redirectWriteEmitter) {
               state.redirectWriteEmitter.fire([sData, cleanLineBreaks]);
-              if (commandEnded) {
+              if (commandHasEnded) {
                 delete state.redirectWriteEmitter;
               }
             } else {
@@ -207,7 +218,7 @@ export function activate(context: vscode.ExtensionContext) {
 
               writeEmitter.fire(res);
 
-              if (commandEnded) {
+              if (commandHasEnded) {
                 updateDocs();
               }
             }
