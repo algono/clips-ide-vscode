@@ -188,7 +188,7 @@ export function activate(context: vscode.ExtensionContext) {
         });
         state.redirectWriteEmitter = factsEmitter;
         writeCommand('(facts)');
-      }, 1000);
+      }, 500);
 
       setTimeout(() => {
         const agendaEmitter = new vscode.EventEmitter<RedirectData>();
@@ -204,18 +204,26 @@ export function activate(context: vscode.ExtensionContext) {
         });
         state.redirectWriteEmitter = agendaEmitter;
         writeCommand('(agenda)');
-      }, 500);
+      }, 1000);
 
       const factsDoc = await vscode.workspace.openTextDocument(factsUri);
       const agendaDoc = await vscode.workspace.openTextDocument(agendaUri);
 
-      await vscode.window.showTextDocument(agendaDoc, {
+      await vscode.window.showTextDocument(factsDoc, {
         preview: false,
         viewColumn: vscode.ViewColumn.Beside,
       });
-      await vscode.window.showTextDocument(factsDoc, {
+
+      // Split the previous and next document horizontally
+      await vscode.commands.executeCommand('workbench.action.newGroupBelow');
+
+      await vscode.window.showTextDocument(agendaDoc, {
         preview: false,
       });
+
+      // Give focus to the original group by focusing the previous one once for each editor the extension creates
+      vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
+      vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
     }
   );
 
