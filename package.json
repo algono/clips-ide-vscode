@@ -12,7 +12,8 @@
 	],
 	"activationEvents": [
 		"onCommand:clips-ide.open-clips-env",
-		"onCommand:clips-ide.load-file"
+		"onCommand:clips-ide.load-file",
+		"onCommand:clips-ide.load-current-file"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -24,6 +25,10 @@
 			{
 				"command": "clips-ide.load-file",
 				"title": "CLIPS: Load File..."
+			},
+			{
+				"command": "clips-ide.load-current-file",
+				"title": "CLIPS: Load Current File"
 			}
 		]
 	},

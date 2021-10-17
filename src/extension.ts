@@ -260,7 +260,28 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(mainD, docD, loadD);
+  const loadCD = vscode.commands.registerCommand(
+    'clips-ide.load-current-file',
+    async () => {
+      const filePath = vscode.window.activeTextEditor?.document.fileName;
+      if (filePath) {
+        if (state.terminal) {
+          state.terminal?.sendText(`(load ${filePath})`);
+          state.terminal?.sendText('\r');
+        } else {
+          vscode.window.showErrorMessage(
+            'Error: The CLIPS terminal is not open.'
+          );
+        }
+      } else {
+        vscode.window.showErrorMessage(
+          'Error: There is no currently open file.'
+        );
+      }
+    }
+  );
+
+  context.subscriptions.push(mainD, docD, loadD, loadCD);
 }
 
 // this method is called when your extension is deactivated
