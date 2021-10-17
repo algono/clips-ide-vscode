@@ -91,45 +91,6 @@ export function activate(context: vscode.ExtensionContext) {
     writeEmitter.fire(data);
   };
 
-  const clipsPty: vscode.Pseudoterminal = {
-    onDidWrite: writeEmitter.event,
-    onDidClose: closeEmitter.event,
-    open: () => {
-      state.clips = spawn('clips');
-      state.clips.on('error', (err) => {
-        vscode.window.showErrorMessage(
-          'Fatal error. Check if CLIPS is installed.'
-        );
-        console.error('Error: ', err);
-        closeEmitter.fire();
-      });
-      state.clips.stdout.on('data', (data) => {
-        const sData: string = data.toString();
-
-        console.log('DATA: ', JSON.stringify(sData));
-
-        const cleanLineBreaks = (data: string) => data.replace(/\n/g, '\r\n');
-
-        if (state.redirectWriteEmitter) {
-          state.redirectWriteEmitter.fire([sData, cleanLineBreaks]);
-
-          // If the current command ended (noticed by the presence of the prompt) and there was a redirect, delete it
-          if (sData.includes('CLIPS>')) {
-            delete state.redirectWriteEmitter;
-          }
-        } else {
-          const res = cleanLineBreaks(sData);
-          console.log('RES: ', JSON.stringify(res));
-
-          writeEmitter.fire(res);
-        }
-      });
-      state.clips.on('exit', () => closeEmitter.fire());
-    },
-    close: () => {},
-    handleInput,
-  };
-
   const myProvider = new (class implements vscode.TextDocumentContentProvider {
     onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
     onDidChange = this.onDidChangeEmitter.event;
@@ -163,48 +124,35 @@ export function activate(context: vscode.ExtensionContext) {
       // Display a message box to the user
       //vscode.window.showInformationMessage('Hello World from CLIPS!');
 
-      let terminal = vscode.window.createTerminal({
-        name: 'CLIPS',
-        pty: clipsPty,
-      });
-
-      terminal.show();
-
-      context.subscriptions.push(terminal);
-
       const factsUri = vscode.Uri.parse('clips:facts');
       const agendaUri = vscode.Uri.parse('clips:agenda');
 
       const writeCommand = (cmd: string) =>
         state.clips?.stdin.write(cmd + '\r\n');
 
-      setTimeout(() => {
-        const factsEmitter = new vscode.EventEmitter<RedirectData>();
-        factsEmitter.event(([data, cleanLineBreaks]) => {
-          console.log('FACTS DATA: ' + data);
+      const updateDoc = (name: keyof typeof state.docs) => {
+        const emitter = new vscode.EventEmitter<RedirectData>();
+        emitter.event(([data, cleanLineBreaks]) => {
+          console.log(`DATA (${name}): ` + data);
           // Removes last two lines (Summary and prompt)
-          state.docs.facts = cleanLineBreaks(data.replace(/\n.*\n.*$/, ''));
-          myProvider.onDidChangeEmitter.fire(factsUri);
-        });
-        state.redirectWriteEmitter = factsEmitter;
-        writeCommand('(facts)');
-      }, 500);
-
-      setTimeout(() => {
-        const agendaEmitter = new vscode.EventEmitter<RedirectData>();
-        agendaEmitter.event(([data, cleanLineBreaks]) => {
-          console.log('AGENDA DATA: ' + data);
-          // Removes last line (prompt)
           if (data.startsWith('CLIPS>')) {
-            state.docs.agenda = '';
+            state.docs[name]= '';
           } else {
-            state.docs.agenda = cleanLineBreaks(data.replace(/\n.*$/, ''));
+            const summaryIndex = data.lastIndexOf('For a total of');
+            state.docs[name] = cleanLineBreaks(data.slice(0, summaryIndex).trimEnd());
           }
-          myProvider.onDidChangeEmitter.fire(agendaUri);
+          myProvider.onDidChangeEmitter.fire(vscode.Uri.parse(`clips:${name}`));
         });
-        state.redirectWriteEmitter = agendaEmitter;
-        writeCommand('(agenda)');
-      }, 1000);
+        state.redirectWriteEmitter = emitter;
+        writeCommand(`(${name})`);
+      };
+
+      const updateDocs = () => {
+        setTimeout(() => updateDoc('facts'), 500);
+        setTimeout(() => updateDoc('agenda'), 1000);
+      };
+
+      updateDocs();
 
       const factsDoc = await vscode.workspace.openTextDocument(factsUri);
       const agendaDoc = await vscode.workspace.openTextDocument(agendaUri);
@@ -224,6 +172,60 @@ export function activate(context: vscode.ExtensionContext) {
       // Give focus to the original group by focusing the previous one once for each editor the extension creates
       vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
       vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
+
+      const clipsPty: vscode.Pseudoterminal = {
+        onDidWrite: writeEmitter.event,
+        onDidClose: closeEmitter.event,
+        open: () => {
+          state.clips = spawn('clips');
+          state.clips.on('error', (err) => {
+            vscode.window.showErrorMessage(
+              'Fatal error. Check if CLIPS is installed.'
+            );
+            console.error('Error: ', err);
+            closeEmitter.fire();
+          });
+          state.clips.stdout.on('data', (data) => {
+            const sData: string = data.toString();
+
+            console.log('DATA: ', JSON.stringify(sData));
+
+            const cleanLineBreaks = (data: string) =>
+              data.replace(/\n/g, '\r\n');
+
+            // If there is a prompt inside the data, we can assume that the command output ended
+            const commandEnded = sData.includes('CLIPS>');
+
+            if (state.redirectWriteEmitter) {
+              state.redirectWriteEmitter.fire([sData, cleanLineBreaks]);
+              if (commandEnded) {
+                delete state.redirectWriteEmitter;
+              }
+            } else {
+              const res = cleanLineBreaks(sData);
+              console.log('RES: ', JSON.stringify(res));
+
+              writeEmitter.fire(res);
+
+              if (commandEnded) {
+                updateDocs();
+              }
+            }
+          });
+          state.clips.on('exit', () => closeEmitter.fire());
+        },
+        close: () => {},
+        handleInput,
+      };
+
+      const terminal = vscode.window.createTerminal({
+        name: 'CLIPS',
+        pty: clipsPty,
+      });
+
+      terminal.show();
+
+      context.subscriptions.push(terminal);
     }
   );
 
