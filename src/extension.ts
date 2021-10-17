@@ -247,16 +247,16 @@ export function activate(context: vscode.ExtensionContext) {
     'clips-ide.load-file',
     async () => {
       const files = await vscode.window.showOpenDialog();
-      if (state.terminal) {
-        files?.forEach((file) => {
-          state.terminal?.sendText(`(load ${file.fsPath})`);
-          state.terminal?.sendText('\r');
-        });
-      } else {
+      if (!state.terminal) {
         vscode.window.showErrorMessage(
           'Error: The CLIPS terminal is not open.'
         );
+        return;
       }
+      files?.forEach((file) => {
+        state.terminal?.sendText(`(load ${file.fsPath})`);
+        state.terminal?.sendText('\r');
+      });
     }
   );
 
@@ -264,20 +264,20 @@ export function activate(context: vscode.ExtensionContext) {
     'clips-ide.load-current-file',
     async () => {
       const filePath = vscode.window.activeTextEditor?.document.fileName;
-      if (filePath) {
-        if (state.terminal) {
-          state.terminal?.sendText(`(load ${filePath})`);
-          state.terminal?.sendText('\r');
-        } else {
-          vscode.window.showErrorMessage(
-            'Error: The CLIPS terminal is not open.'
-          );
-        }
-      } else {
+      if (!filePath) {
         vscode.window.showErrorMessage(
           'Error: There is no currently open file.'
         );
+        return;
       }
+      if (!state.terminal) {
+        vscode.window.showErrorMessage(
+          'Error: The CLIPS terminal is not open.'
+        );
+        return;
+      }
+      state.terminal?.sendText(`(load ${filePath})`);
+      state.terminal?.sendText('\r');
     }
   );
 
