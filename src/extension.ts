@@ -6,16 +6,17 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 
 const state: {
   clips?: ChildProcessWithoutNullStreams;
-  writeEmitter?: vscode.EventEmitter<string>;
-} = {};
+  docs: {
+    facts?: string;
+    agenda?: string;
+  };
+} = { docs: {} };
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   const writeEmitter = new vscode.EventEmitter<string>();
   const closeEmitter = new vscode.EventEmitter<void>();
-
-  state.writeEmitter = writeEmitter;
 
   let line = '',
     pos = 0;
@@ -111,6 +112,25 @@ export function activate(context: vscode.ExtensionContext) {
     handleInput,
   };
 
+  const myProvider = new (class implements vscode.TextDocumentContentProvider {
+    onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+    onDidChange = this.onDidChangeEmitter.event;
+    provideTextDocumentContent(uri: vscode.Uri): string {
+      const contentType = uri.path;
+      if (contentType in state.docs) {
+        const content = state.docs[contentType as keyof typeof state.docs];
+        console.log('PROVIDING: ', content);
+        return content ?? '';
+      }
+      return '';
+    }
+  })();
+
+  let docDisposable = vscode.workspace.registerTextDocumentContentProvider(
+    'clips',
+    myProvider
+  );
+
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   //console.log('Congratulations, your extension "clips-ide" is now active!');
@@ -120,7 +140,7 @@ export function activate(context: vscode.ExtensionContext) {
   // The commandId parameter must match the command field in package.json
   let disposable = vscode.commands.registerCommand(
     'clips-ide.helloWorld',
-    () => {
+    async () => {
       // The code you place here will be executed every time your command is executed
       // Display a message box to the user
       //vscode.window.showInformationMessage('Hello World from CLIPS!');
@@ -133,10 +153,26 @@ export function activate(context: vscode.ExtensionContext) {
       terminal.show();
 
       context.subscriptions.push(terminal);
+
+      const uri = vscode.Uri.parse('clips:facts');
+
+      setTimeout(() => {
+        state.clips?.stdout.once('data', (data) => {
+          console.log('FACTS DATA: ' + data);
+          // Removes last two lines (Summary and prompt)
+          state.docs.facts = data.toString().replace(/\n.*\n.*$/, '');
+          myProvider.onDidChangeEmitter.fire(uri);
+        });
+        state.clips?.stdin.write('(facts)\r\n');
+      }, 500);
+
+      const doc = await vscode.workspace.openTextDocument(uri);
+      await vscode.window.showTextDocument(doc, { preview: false });
     }
   );
 
   context.subscriptions.push(disposable);
+  context.subscriptions.push(docDisposable);
 }
 
 // this method is called when your extension is deactivated
