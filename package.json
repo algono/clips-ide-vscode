@@ -11,14 +11,14 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:clips-ide.helloWorld"
+		"onCommand:clips-ide.open-clips-env"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "clips-ide.helloWorld",
-				"title": "Hello World"
+				"command": "clips-ide.open-clips-env",
+				"title": "CLIPS: Open CLIPS Environment"
 			}
 		]
 	},
