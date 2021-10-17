@@ -172,11 +172,11 @@ export function activate(context: vscode.ExtensionContext) {
 
       context.subscriptions.push(terminal);
 
-      const uri = vscode.Uri.parse('clips:facts');
+      const factsUri = vscode.Uri.parse('clips:facts');
+      const agendaUri = vscode.Uri.parse('clips:agenda');
 
       const writeCommand = (cmd: string) =>
         state.clips?.stdin.write(cmd + '\r\n');
-      const getFacts = () => writeCommand('(facts)');
 
       setTimeout(() => {
         const factsEmitter = new vscode.EventEmitter<RedirectData>();
@@ -184,19 +184,42 @@ export function activate(context: vscode.ExtensionContext) {
           console.log('FACTS DATA: ' + data);
           // Removes last two lines (Summary and prompt)
           state.docs.facts = cleanLineBreaks(data.replace(/\n.*\n.*$/, ''));
-          myProvider.onDidChangeEmitter.fire(uri);
+          myProvider.onDidChangeEmitter.fire(factsUri);
         });
         state.redirectWriteEmitter = factsEmitter;
-        getFacts();
+        writeCommand('(facts)');
+      }, 1000);
+
+      setTimeout(() => {
+        const agendaEmitter = new vscode.EventEmitter<RedirectData>();
+        agendaEmitter.event(([data, cleanLineBreaks]) => {
+          console.log('AGENDA DATA: ' + data);
+          // Removes last line (prompt)
+          if (data.startsWith('CLIPS>')) {
+            state.docs.agenda = '';
+          } else {
+            state.docs.agenda = cleanLineBreaks(data.replace(/\n.*$/, ''));
+          }
+          myProvider.onDidChangeEmitter.fire(agendaUri);
+        });
+        state.redirectWriteEmitter = agendaEmitter;
+        writeCommand('(agenda)');
       }, 500);
 
-      const doc = await vscode.workspace.openTextDocument(uri);
-      await vscode.window.showTextDocument(doc, { preview: false });
+      const factsDoc = await vscode.workspace.openTextDocument(factsUri);
+      const agendaDoc = await vscode.workspace.openTextDocument(agendaUri);
+
+      await vscode.window.showTextDocument(agendaDoc, {
+        preview: false,
+        viewColumn: vscode.ViewColumn.Beside,
+      });
+      await vscode.window.showTextDocument(factsDoc, {
+        preview: false,
+      });
     }
   );
 
-  context.subscriptions.push(disposable);
-  context.subscriptions.push(docDisposable);
+  context.subscriptions.push(disposable, docDisposable);
 }
 
 // this method is called when your extension is deactivated
