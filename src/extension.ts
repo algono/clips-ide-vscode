@@ -201,7 +201,7 @@ export function activate(context: vscode.ExtensionContext) {
       const factsDoc = await vscode.workspace.openTextDocument(factsUri);
       const agendaDoc = await vscode.workspace.openTextDocument(agendaUri);
 
-      await vscode.window.showTextDocument(factsDoc, {
+      const factsEditor = await vscode.window.showTextDocument(factsDoc, {
         preview: false,
         viewColumn: vscode.ViewColumn.Beside,
       });
@@ -209,13 +209,29 @@ export function activate(context: vscode.ExtensionContext) {
       // Split the previous and next document horizontally
       await vscode.commands.executeCommand('workbench.action.newGroupBelow');
 
-      await vscode.window.showTextDocument(agendaDoc, {
+      const agendaEditor = await vscode.window.showTextDocument(agendaDoc, {
         preview: false,
       });
 
       // Give focus to the original group by focusing the previous one once for each editor the extension creates
       vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
       vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
+
+      const closePty = () => {
+        console.log('CLOSING PTY');
+
+        // The 'hide' method is deprecated, but it seems to be the only reasonable working solution (currently)
+        // reference: https://github.com/microsoft/vscode/issues/21617#issuecomment-283365406
+        [factsEditor, agendaEditor].forEach((e) => {
+          if (e.hide) {
+            return e.hide();
+          }
+          // Added an error message in case the method ever gets removed
+          return vscode.window.showErrorMessage('The window hiding functionality seems to be missing. This probably has to do with a VSCode update. Please report the issue to the developer.');
+        });
+
+        state.docs = {};
+      };
 
       const clipsPty: vscode.Pseudoterminal = {
         onDidWrite: writeEmitter.event,
@@ -258,9 +274,12 @@ export function activate(context: vscode.ExtensionContext) {
               }
             }
           });
-          state.clips.on('exit', () => closeEmitter.fire());
+          state.clips.on('exit', () => {
+            closePty();
+            return closeEmitter.fire();
+          });
         },
-        close: () => {},
+        close: closePty,
         handleInput,
       };
 
