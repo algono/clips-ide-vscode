@@ -108,8 +108,8 @@ export function activate(context: vscode.ExtensionContext) {
         writeEmitter.fire('\x1b[P');
         return;
       case '\u0003': // SIGINT (Ctrl+C)
-        // (NOTE: It seems like CLIPS does not behave well with SIGINT)
-        //writeCommand(data, true); // Send the signal to the shell
+      // (NOTE: It seems like CLIPS does not behave well with SIGINT)
+      //writeCommand(data, true); // Send the signal to the shell
       // But also delete the line (not using break here makes it so that it continues through the next case)
       case '\u0015': // (Ctrl+U) (used in terminals to delete line)
         if (pos === 0) {
@@ -238,6 +238,12 @@ export function activate(context: vscode.ExtensionContext) {
       const closePty = () => {
         console.log('CLOSING PTY');
 
+        vscode.commands.executeCommand(
+          'setContext',
+          'clips-ide.terminalOpen',
+          false
+        );
+
         // The 'hide' method is deprecated, but it seems to be the only reasonable working solution (currently)
         // reference: https://github.com/microsoft/vscode/issues/21617#issuecomment-283365406
         [factsEditor, agendaEditor].forEach((e) => {
@@ -312,6 +318,11 @@ export function activate(context: vscode.ExtensionContext) {
             closePty();
             return closeEmitter.fire();
           });
+          vscode.commands.executeCommand(
+            'setContext',
+            'clips-ide.terminalOpen',
+            true
+          );
         },
         close: closePty,
         handleInput,
@@ -373,9 +384,15 @@ export function activate(context: vscode.ExtensionContext) {
 
   // VSCode commands for executing CLIPS commands in terminal
   ['reset', 'clear'].forEach((cmd) => {
-    const cmdD = vscode.commands.registerCommand('clips-ide.cmd-' + cmd, () =>
-      sendCommand(cmd)
-    );
+    const cmdD = vscode.commands.registerCommand('clips-ide.cmd-' + cmd, () => {
+      if (!state.terminal) {
+        vscode.window.showErrorMessage(
+          'Error: The CLIPS terminal is not open.'
+        );
+        return;
+      }
+      return sendCommand(cmd);
+    });
     context.subscriptions.push(cmdD);
   });
 

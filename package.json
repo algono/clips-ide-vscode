@@ -26,19 +26,23 @@
 			},
 			{
 				"command": "clips-ide.load-file",
-				"title": "CLIPS: Load File..."
+				"title": "CLIPS: Load File...",
+				"enablement": "clips-ide.terminalOpen"
 			},
 			{
 				"command": "clips-ide.load-current-file",
-				"title": "CLIPS: Load Current File"
+				"title": "CLIPS: Load Current File",
+				"enablement": "clips-ide.terminalOpen"
 			},
 			{
 				"command": "clips-ide.cmd-reset",
-				"title": "CLIPS: Command - Reset"
+				"title": "CLIPS: Command - Reset",
+				"enablement": "clips-ide.terminalOpen"
 			},
 			{
 				"command": "clips-ide.cmd-clear",
-				"title": "CLIPS: Command - Clear"
+				"title": "CLIPS: Command - Clear",
+				"enablement": "clips-ide.terminalOpen"
 			}
 		]
 	},
