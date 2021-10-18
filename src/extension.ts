@@ -71,6 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
         pos = 0;
         return;
       case '\x7f': // Backspace
+      case '\b': // Backspace (escape code)
         if (pos === 0) {
           return;
         }
