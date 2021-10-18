@@ -13,7 +13,9 @@
 	"activationEvents": [
 		"onCommand:clips-ide.open-clips-env",
 		"onCommand:clips-ide.load-file",
-		"onCommand:clips-ide.load-current-file"
+		"onCommand:clips-ide.load-current-file",
+		"onCommand:clips-ide.cmd-reset",
+		"onCommand:clips-ide.cmd-clear"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -29,6 +31,14 @@
 			{
 				"command": "clips-ide.load-current-file",
 				"title": "CLIPS: Load Current File"
+			},
+			{
+				"command": "clips-ide.cmd-reset",
+				"title": "CLIPS: Command - Reset"
+			},
+			{
+				"command": "clips-ide.cmd-clear",
+				"title": "CLIPS: Command - Clear"
 			}
 		]
 	},

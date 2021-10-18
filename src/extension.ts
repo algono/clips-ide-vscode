@@ -227,7 +227,9 @@ export function activate(context: vscode.ExtensionContext) {
             return e.hide();
           }
           // Added an error message in case the method ever gets removed
-          return vscode.window.showErrorMessage('The window hiding functionality seems to be missing. This probably has to do with a VSCode update. Please report the issue to the developer.');
+          return vscode.window.showErrorMessage(
+            'The window hiding functionality seems to be missing. This probably has to do with a VSCode update. Please report the issue to the developer.'
+          );
         });
 
         state.docs = {};
@@ -296,6 +298,11 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const sendCommand = (cmd: string) => {
+    state.terminal?.sendText(`(${cmd})`);
+    state.terminal?.sendText('\r');
+  };
+
   const loadD = vscode.commands.registerCommand(
     'clips-ide.load-file',
     async () => {
@@ -307,8 +314,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       files?.forEach((file) => {
-        state.terminal?.sendText(`(load ${file.fsPath})`);
-        state.terminal?.sendText('\r');
+        sendCommand(`load ${file.fsPath}`);
       });
     }
   );
@@ -329,10 +335,15 @@ export function activate(context: vscode.ExtensionContext) {
         );
         return;
       }
-      state.terminal?.sendText(`(load ${filePath})`);
-      state.terminal?.sendText('\r');
+      sendCommand(`load ${filePath}`);
     }
   );
+
+  // VSCode commands for executing CLIPS commands in terminal
+  ['reset', 'clear'].forEach((cmd) => {
+    const cmdD = vscode.commands.registerCommand('clips-ide.cmd-' + cmd, () => sendCommand(cmd));
+    context.subscriptions.push(cmdD);
+  });
 
   context.subscriptions.push(mainD, docD, loadD, loadCD);
 }
