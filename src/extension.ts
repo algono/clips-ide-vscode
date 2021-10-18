@@ -272,10 +272,21 @@ export function activate(context: vscode.ExtensionContext) {
           const versionCheckEmitter = new vscode.EventEmitter<RedirectData>();
 
           versionCheckEmitter.event(([data, prepare]) => {
-            const version = /\(.*\s/.exec(data)?.[0];
+            const version = /\((.*?)\s/.exec(data)?.[1];
             
+            console.log('VERSION: ', JSON.stringify(version));
+
+            const semverVersion = semver.coerce(version); 
+
             // If the CLIPS version is >= 6.40, assume that SIGINT works
-            state.sigintWorks = version !== undefined && semver.gte(version, '6.40');
+            // Note: semver needs the '.0' at the end to work
+            try {
+              state.sigintWorks =
+                semverVersion !== null && semver.gte(semverVersion, '6.40.0');
+            } catch (err) {
+              console.error('ERROR: ', err);
+            }
+            console.log('SIGINT WORKS: ', state.sigintWorks);
 
             // Sends the data to the original emitter
             writeEmitter.fire(prepare(data));
