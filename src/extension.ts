@@ -107,7 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       case '\u0003': // SIGINT (Ctrl+C)
         writeCommand(data, true); // Send the signal to the shell
-        // But also delete the line (not using break here makes it so that it continues through the next case)
+      // But also delete the line (not using break here makes it so that it continues through the next case)
       case '\u0015': // (Ctrl+U) (used in terminals to delete line)
         if (pos === 0) {
           return;
@@ -128,7 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
           writeEmitter.fire(data + after);
           line = before + data + after;
           // Move cursor back to the original position
-          writeEmitter.fire('\x1b[D'.repeat(after.length));
+          writeEmitter.fire(`\x1b[${after.length}D`);
         } else {
           writeEmitter.fire(data);
           line += data;
