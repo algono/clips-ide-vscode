@@ -4,10 +4,17 @@ import * as vscode from 'vscode';
 
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 
+import * as AsyncLock from 'async-lock';
+
 type RedirectData = [string, (data: string) => string];
 
 const state: {
   clips?: ChildProcessWithoutNullStreams;
+  lock?: AsyncLock;
+  terminalHasLock?: boolean;
+  lockDone?: Parameters<
+    Parameters<InstanceType<typeof AsyncLock>['acquire']>[1]
+  >[0];
   ptyWriteEmitter?: vscode.EventEmitter<string>;
   redirectWriteEmitter?: vscode.EventEmitter<RedirectData>;
   docs: {
@@ -25,6 +32,32 @@ export function activate(context: vscode.ExtensionContext) {
 
   state.ptyWriteEmitter = writeEmitter;
 
+  const writeCommand = (
+    cmd: string,
+    isTerminal: boolean,
+    before?: () => any
+  ) => {
+    const write = () => {
+      before?.();
+      return state.clips?.stdin.write(cmd + '\r\n');
+    };
+
+    // If the terminal already had the lock, bypass it
+    // (this should allow for commands which ask for user input more than once to work)
+
+    // (NOTE: Doing this assumes that no processes other than the terminal need multiple user inputs)
+    // (if that ceased to be the case, an id system for processes should need to be implemented)
+    if (isTerminal && state.terminalHasLock) {
+      return write();
+    }
+
+    return state.lock?.acquire('clips', (done) => {
+      state.lockDone = done;
+      state.terminalHasLock = isTerminal;
+      write();
+    });
+  };
+
   let line = '',
     pos = 0;
   const handleInput: (data: string) => void = (data) => {
@@ -32,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
     switch (data) {
       case '\r':
         writeEmitter.fire('\r\n');
-        state.clips?.stdin.write(line + '\r\n');
+        writeCommand(line, true);
         line = '';
         pos = 0;
         return;
@@ -125,9 +158,6 @@ export function activate(context: vscode.ExtensionContext) {
       const factsUri = vscode.Uri.parse('clips:facts');
       const agendaUri = vscode.Uri.parse('clips:agenda');
 
-      const writeCommand = (cmd: string) =>
-        state.clips?.stdin.write(cmd + '\r\n');
-
       const updateDoc = (name: keyof typeof state.docs) => {
         // Removes last two lines (Summary and prompt)
         const cleanDoc = ([data, cleanLineBreaks]: RedirectData): string => {
@@ -155,14 +185,15 @@ export function activate(context: vscode.ExtensionContext) {
           }
         });
 
-        state.docs[name] = '';
-        state.redirectWriteEmitter = emitter;
-        writeCommand(`(${name})`);
+        writeCommand(`(${name})`, false, () => {
+          state.docs[name] = '';
+          state.redirectWriteEmitter = emitter;
+        });
       };
 
       const updateDocs = () => {
-        setTimeout(() => updateDoc('facts'), 500);
-        setTimeout(() => updateDoc('agenda'), 1000);
+        updateDoc('facts');
+        updateDoc('agenda');
       };
 
       updateDocs();
@@ -190,6 +221,7 @@ export function activate(context: vscode.ExtensionContext) {
         onDidWrite: writeEmitter.event,
         onDidClose: closeEmitter.event,
         open: () => {
+          state.lock = new AsyncLock();
           state.clips = spawn('clips');
           state.clips.on('error', (err) => {
             vscode.window.showErrorMessage(
@@ -212,6 +244,7 @@ export function activate(context: vscode.ExtensionContext) {
               state.redirectWriteEmitter.fire([sData, cleanLineBreaks]);
               if (commandHasEnded) {
                 delete state.redirectWriteEmitter;
+                state.lockDone?.();
               }
             } else {
               const res = cleanLineBreaks(sData);
@@ -220,6 +253,7 @@ export function activate(context: vscode.ExtensionContext) {
               writeEmitter.fire(res);
 
               if (commandHasEnded) {
+                state.lockDone?.();
                 updateDocs();
               }
             }
