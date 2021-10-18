@@ -1,10 +1,9 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
-
 import * as AsyncLock from 'async-lock';
+import * as semver from 'semver';
 
 type RedirectData = [string, (data: string) => string];
 
@@ -22,6 +21,7 @@ const state: {
     agenda?: string;
   };
   terminal?: vscode.Terminal;
+  sigintWorks?: boolean;
 } = { docs: {} };
 
 // this method is called when your extension is activated
@@ -120,8 +120,8 @@ export function activate(context: vscode.ExtensionContext) {
         line = '';
         pos = 0;
 
-        // If it was the SIGINT signal, also send it to the shell
-        if (data === '\u0003') {
+        // If the CLIPS version supports it and it was the SIGINT signal, also send it to the shell
+        if (state.sigintWorks && data === '\u0003') {
           writeCommand(data, true);
         }
         return;
@@ -269,6 +269,21 @@ export function activate(context: vscode.ExtensionContext) {
         onDidWrite: writeEmitter.event,
         onDidClose: closeEmitter.event,
         open: () => {
+          const versionCheckEmitter = new vscode.EventEmitter<RedirectData>();
+
+          versionCheckEmitter.event(([data, prepare]) => {
+            const version = /\(.*\s/.exec(data)?.[0];
+            
+            // If the CLIPS version is >= 6.40, assume that SIGINT works
+            state.sigintWorks = version !== undefined && semver.gte(version, '6.40');
+
+            // Sends the data to the original emitter
+            writeEmitter.fire(prepare(data));
+          });
+
+          // Used to take the first line, where the version is printed
+          state.redirectWriteEmitter = versionCheckEmitter;
+
           state.lock = new AsyncLock();
           state.clips = spawn('clips');
           state.clips.on('error', (err) => {
