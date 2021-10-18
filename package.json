@@ -67,7 +67,7 @@
 			"editor/title": [
 				{
 					"command": "clips-ide.open-clips-env",
-					"when": "resourceLangId == clips",
+					"when": "resourceLangId == clips && !clips-ide.terminalOpen",
 					"group": "navigation"
 				}
 			]
