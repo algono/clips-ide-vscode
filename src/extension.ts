@@ -303,8 +303,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (state.redirectWriteEmitter) {
               state.redirectWriteEmitter.fire([sData, prepare]);
             } else {
-              const res = prepare(sData);
-              writeEmitter.fire(res);
+              writeEmitter.fire(prepare(sData));
             }
           });
           state.clips.on('exit', () => {
