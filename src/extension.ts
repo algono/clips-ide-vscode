@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
   let line = '',
     pos = 0;
   const handleInput: (data: string) => void = (data) => {
-    console.log('LINE:', line);
+    console.log('LINE:', JSON.stringify(line));
     switch (data) {
       case '\r':
         writeEmitter.fire('\r\n');
@@ -104,6 +104,21 @@ export function activate(context: vscode.ExtensionContext) {
         line = line.slice(0, pos) + line.slice(pos + 1);
         // Delete character
         writeEmitter.fire('\x1b[P');
+        return;
+      case '\u0003': // SIGINT (Ctrl+C)
+        writeCommand(data, true); // Send the signal to the shell
+        // But also delete the line (not using break here makes it so that it continues through the next case)
+      case '\u0015': // (Ctrl+U) (used in terminals to delete line)
+        if (pos === 0) {
+          return;
+        }
+        // Move to the left 'pos' times (aka to the initial position)
+        writeEmitter.fire(`\x1b[${pos}D`);
+        // Delete from cursor to the end of the line
+        writeEmitter.fire('\x1b[K');
+
+        line = '';
+        pos = 0;
         return;
       default:
         // Support for typing characters at any position other than the end
@@ -341,7 +356,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   // VSCode commands for executing CLIPS commands in terminal
   ['reset', 'clear'].forEach((cmd) => {
-    const cmdD = vscode.commands.registerCommand('clips-ide.cmd-' + cmd, () => sendCommand(cmd));
+    const cmdD = vscode.commands.registerCommand('clips-ide.cmd-' + cmd, () =>
+      sendCommand(cmd)
+    );
     context.subscriptions.push(cmdD);
   });
 
