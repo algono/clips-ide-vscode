@@ -23,8 +23,9 @@
 			{
 				"id": "clips",
 				"aliases": [
+					"CLIPS",
 					"clips",
-					"clips"
+					"clp"
 				],
 				"extensions": [
 					".clp"
