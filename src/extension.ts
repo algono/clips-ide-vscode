@@ -411,7 +411,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // VSCode commands for executing CLIPS commands in terminal
-  ['reset', 'clear'].forEach((cmd) => {
+  ['run', 'reset', 'clear'].forEach((cmd) => {
     const cmdD = vscode.commands.registerCommand('clips-ide.cmd-' + cmd, () => {
       if (!state.terminal) {
         vscode.window.showErrorMessage(

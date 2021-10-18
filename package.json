@@ -43,6 +43,11 @@
 				"command": "clips-ide.cmd-clear",
 				"title": "CLIPS: Command - Clear",
 				"enablement": "clips-ide.terminalOpen"
+			},
+			{
+				"command": "clips-ide.cmd-run",
+				"title": "CLIPS: Command - Run",
+				"enablement": "clips-ide.terminalOpen"
 			}
 		]
 	},
