@@ -108,7 +108,8 @@ export function activate(context: vscode.ExtensionContext) {
         writeEmitter.fire('\x1b[P');
         return;
       case '\u0003': // SIGINT (Ctrl+C)
-        writeCommand(data, true); // Send the signal to the shell
+        // (NOTE: It seems like CLIPS does not behave well with SIGINT)
+        //writeCommand(data, true); // Send the signal to the shell
       // But also delete the line (not using break here makes it so that it continues through the next case)
       case '\u0015': // (Ctrl+U) (used in terminals to delete line)
         if (pos === 0) {
