@@ -19,6 +19,18 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"languages": [
+			{
+				"id": "clips",
+				"aliases": [
+					"clips",
+					"clips"
+				],
+				"extensions": [
+					".clp"
+				]
+			}
+		],
 		"commands": [
 			{
 				"command": "clips-ide.open-clips-env",
@@ -49,7 +61,16 @@
 				"title": "CLIPS: Command - Run",
 				"enablement": "clips-ide.terminalOpen"
 			}
-		]
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "clips-ide.open-clips-env",
+					"when": "resourceLangId == clips",
+					"group": "navigation"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
