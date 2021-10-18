@@ -62,6 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
     pos = 0;
   const handleInput: (data: string) => void = (data) => {
     console.log('LINE:', JSON.stringify(line));
+    console.log('DATA IN:', JSON.stringify(data));
     switch (data) {
       case '\r':
         writeEmitter.fire('\r\n');
@@ -186,7 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const emitter = new vscode.EventEmitter<RedirectData>();
         emitter.event(([data, cleanLineBreaks]) => {
-          console.log(`DATA (${name}): ` + data);
+          console.log(`DATA OUT (${name}): `, JSON.stringify(data));
           state.docs[name] += data;
           if (commandEnded(data)) {
             state.docs[name] = cleanDoc([
@@ -250,6 +251,10 @@ export function activate(context: vscode.ExtensionContext) {
         state.docs = {};
       };
 
+      const cleanLineBreaks = (data: string) => data.replace(/\n/g, '\r\n');
+
+      const colorRed = (data: string) => '\x1b[31m' + data + '\x1b[0m';
+
       const clipsPty: vscode.Pseudoterminal = {
         onDidWrite: writeEmitter.event,
         onDidClose: closeEmitter.event,
@@ -266,10 +271,7 @@ export function activate(context: vscode.ExtensionContext) {
           state.clips.stdout.on('data', (data) => {
             const sData: string = data.toString();
 
-            console.log('DATA: ', JSON.stringify(sData));
-
-            const cleanLineBreaks = (data: string) =>
-              data.replace(/\n/g, '\r\n');
+            console.log('DATA OUT: ', JSON.stringify(sData));
 
             const commandHasEnded = commandEnded(sData);
 
@@ -289,6 +291,20 @@ export function activate(context: vscode.ExtensionContext) {
                 state.lockDone?.();
                 updateDocs();
               }
+            }
+          });
+          state.clips.stderr.on('data', (data) => {
+            const sData: string = data.toString();
+
+            console.log('DATA ERR: ', JSON.stringify(sData));
+
+            const prepare = (data: string) => colorRed(cleanLineBreaks(data));
+
+            if (state.redirectWriteEmitter) {
+              state.redirectWriteEmitter.fire([sData, prepare]);
+            } else {
+              const res = prepare(sData);
+              writeEmitter.fire(res);
             }
           });
           state.clips.on('exit', () => {
