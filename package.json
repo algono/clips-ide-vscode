@@ -15,7 +15,8 @@
 		"onCommand:clips-ide.load-file",
 		"onCommand:clips-ide.load-current-file",
 		"onCommand:clips-ide.cmd-reset",
-		"onCommand:clips-ide.cmd-clear"
+		"onCommand:clips-ide.cmd-clear",
+		"onCommand:clips-ide.cmd-run"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
