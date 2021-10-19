@@ -35,31 +35,38 @@
 		"commands": [
 			{
 				"command": "clips-ide.open-clips-env",
-				"title": "CLIPS: Open CLIPS Environment"
+				"category": "CLIPS",
+				"title": "Open CLIPS Environment",
+				"icon": "media/clipslogo.png"
 			},
 			{
 				"command": "clips-ide.load-file",
-				"title": "CLIPS: Load File...",
+				"category": "CLIPS",
+				"title": "Load File...",
 				"enablement": "clips-ide.terminalOpen"
 			},
 			{
 				"command": "clips-ide.load-current-file",
-				"title": "CLIPS: Load Current File",
+				"category": "CLIPS",
+				"title": "Load Current File",
 				"enablement": "clips-ide.terminalOpen"
 			},
 			{
 				"command": "clips-ide.cmd-reset",
-				"title": "CLIPS: Command - Reset",
+				"category": "CLIPS Command",
+				"title": "Reset",
 				"enablement": "clips-ide.terminalOpen"
 			},
 			{
 				"command": "clips-ide.cmd-clear",
-				"title": "CLIPS: Command - Clear",
+				"category": "CLIPS Command",
+				"title": "Clear",
 				"enablement": "clips-ide.terminalOpen"
 			},
 			{
 				"command": "clips-ide.cmd-run",
-				"title": "CLIPS: Command - Run",
+				"category": "CLIPS Command",
+				"title": "Run",
 				"enablement": "clips-ide.terminalOpen"
 			}
 		],
@@ -70,8 +77,59 @@
 					"when": "resourceLangId == clips && !clips-ide.terminalOpen",
 					"group": "navigation"
 				}
+			],
+			"editor/context": [
+				{
+					"command": "clips-ide.load-current-file",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen"
+				}
+			],
+			"editor/title/run": [
+				{
+					"submenu": "clips-ide.menu",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips"
+				}
+			],
+			"clips-ide.menu": [
+				{
+					"command": "clips-ide.load-current-file",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen"
+				},
+				{
+					"submenu": "clips-ide.menu-run",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen"
+				}
+			],
+			"clips-ide.menu-run": [
+				{
+					"command": "clips-ide.cmd-run",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips.run"
+				},
+				{
+					"command": "clips-ide.cmd-reset",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips.run"
+				},
+				{
+					"command": "clips-ide.cmd-clear",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips.run"
+				}
 			]
-		}
+		},
+		"submenus": [
+			{
+				"id": "clips-ide.menu",
+				"label": "CLIPS",
+				"icon": "media/clipslogo.png"
+			},
+			{
+				"id": "clips-ide.menu-run",
+				"label": "Run options"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
