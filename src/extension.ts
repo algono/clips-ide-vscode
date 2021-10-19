@@ -336,6 +336,18 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const checkTerminal = (t: vscode.Terminal | undefined) => {
+    if (t && terminalOptions === t.creationOptions) {
+      state.terminal = t;
+    }
+  };
+
+  // When opening the CLIPS terminal via profile, this is the only way to retrieve the terminal object
+  vscode.window.onDidOpenTerminal(checkTerminal);
+
+  // If multiple CLIPS terminals are open, we should only use the last active one
+  vscode.window.onDidChangeActiveTerminal(checkTerminal);
+
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
