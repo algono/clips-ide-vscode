@@ -240,6 +240,9 @@ export function activate(context: vscode.ExtensionContext) {
       const closePty = () => {
         console.log('CLOSING PTY');
 
+        // Make sure that the shell is actually closed
+        state.clips?.kill();
+
         vscode.commands.executeCommand(
           'setContext',
           'clips-ide.terminalOpen',
@@ -273,10 +276,10 @@ export function activate(context: vscode.ExtensionContext) {
 
           versionCheckEmitter.event(([data, prepare]) => {
             const version = /\((.*?)\s/.exec(data)?.[1];
-            
+
             console.log('VERSION: ', JSON.stringify(version));
 
-            const semverVersion = semver.coerce(version); 
+            const semverVersion = semver.coerce(version);
 
             // If the CLIPS version is >= 6.40, assume that SIGINT works
             // Note: semver needs the '.0' at the end to work
