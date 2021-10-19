@@ -37,7 +37,10 @@
 				"command": "clips-ide.open-clips-env",
 				"category": "CLIPS",
 				"title": "Open CLIPS Environment",
-				"icon": "media/clipslogo.png"
+				"icon": {
+					"light": "media/clipslogo.png",
+					"dark": "media/clipslogo_inverted.png"
+				}
 			},
 			{
 				"command": "clips-ide.load-file",
@@ -123,7 +126,10 @@
 			{
 				"id": "clips-ide.menu",
 				"label": "CLIPS",
-				"icon": "media/clipslogo.png"
+				"icon": {
+					"light": "media/clipslogo.png",
+					"dark": "media/clipslogo_inverted.png"
+				}
 			},
 			{
 				"id": "clips-ide.menu-run",
