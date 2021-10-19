@@ -22,6 +22,7 @@ const state: {
   };
   terminal?: vscode.Terminal;
   sigintWorks?: boolean;
+  openEditors?: vscode.TextEditor[];
 } = { docs: {} };
 
 // this method is called when your extension is activated
@@ -164,57 +165,185 @@ export function activate(context: vscode.ExtensionContext) {
     myProvider
   );
 
+  const closePty = () => {
+    console.log('CLOSING PTY');
+
+    // Make sure that the shell is actually closed
+    state.clips?.kill();
+
+    vscode.commands.executeCommand(
+      'setContext',
+      'clips-ide.terminalOpen',
+      false
+    );
+
+    // The 'hide' method is deprecated, but it seems to be the only reasonable working solution (currently)
+    // reference: https://github.com/microsoft/vscode/issues/21617#issuecomment-283365406
+    state.openEditors?.forEach((e) => {
+      if (e.hide) {
+        return e.hide();
+      }
+      // Added an error message in case the method ever gets removed
+      return vscode.window.showErrorMessage(
+        'The window hiding functionality seems to be missing. This probably has to do with a VSCode update. Please report the issue to the developer.'
+      );
+    });
+
+    state.docs = {};
+    delete state.openEditors;
+  };
+
+  // If there is a prompt inside the data, we can assume that the command output ended
+  const commandEnded = (data: string) => data.includes('CLIPS>');
+
+  const updateDoc = (name: keyof typeof state.docs) => {
+    // Removes last two lines (Summary and prompt)
+    const cleanDoc = ([data, cleanLineBreaks]: RedirectData): string => {
+      if (data.startsWith('CLIPS>')) {
+        return '';
+      } else {
+        const summaryIndex = data.lastIndexOf('For a total of');
+        return cleanLineBreaks(data.slice(0, summaryIndex).trimEnd());
+      }
+    };
+
+    const emitter = new vscode.EventEmitter<RedirectData>();
+    emitter.event(([data, cleanLineBreaks]) => {
+      console.log(`DATA OUT (${name}): `, JSON.stringify(data));
+      state.docs[name] += data;
+      if (commandEnded(data)) {
+        state.docs[name] = cleanDoc([state.docs[name] ?? '', cleanLineBreaks]);
+
+        myProvider.onDidChangeEmitter.fire(vscode.Uri.parse(`clips:${name}`));
+      }
+    });
+
+    writeCommand(`(${name})`, false, () => {
+      state.docs[name] = '';
+      state.redirectWriteEmitter = emitter;
+    });
+  };
+
+  const updateDocs = () => {
+    updateDoc('facts');
+    updateDoc('agenda');
+  };
+
+  const cleanLineBreaks = (data: string) => data.replace(/\n/g, '\r\n');
+
+  const colorRed = (data: string) => '\x1b[31m' + data + '\x1b[0m';
+
+  const clipsPty: vscode.Pseudoterminal = {
+    onDidWrite: writeEmitter.event,
+    onDidClose: closeEmitter.event,
+    open: () => {
+      const versionCheckEmitter = new vscode.EventEmitter<RedirectData>();
+
+      versionCheckEmitter.event(([data, prepare]) => {
+        const version = /\((.*?)\s/.exec(data)?.[1];
+
+        console.log('VERSION: ', JSON.stringify(version));
+
+        const semverVersion = semver.coerce(version);
+
+        // If the CLIPS version is >= 6.40, assume that SIGINT works
+        // Note: semver needs the '.0' at the end to work
+        try {
+          state.sigintWorks =
+            semverVersion !== null && semver.gte(semverVersion, '6.40.0');
+        } catch (err) {
+          console.error('ERROR: ', err);
+        }
+        console.log('SIGINT WORKS: ', state.sigintWorks);
+
+        // Sends the data to the original emitter
+        writeEmitter.fire(prepare(data));
+      });
+
+      // Used to take the first line, where the version is printed
+      state.redirectWriteEmitter = versionCheckEmitter;
+
+      state.lock = new AsyncLock();
+      state.clips = spawn('clips');
+      state.clips.on('error', (err) => {
+        vscode.window.showErrorMessage(
+          'Fatal error. Check if CLIPS is installed.'
+        );
+        console.error('Error: ', err);
+        closeEmitter.fire();
+      });
+      state.clips.stdout.on('data', (data) => {
+        const sData: string = data.toString();
+
+        console.log('DATA OUT: ', JSON.stringify(sData));
+
+        const commandHasEnded = commandEnded(sData);
+
+        if (state.redirectWriteEmitter) {
+          state.redirectWriteEmitter.fire([sData, cleanLineBreaks]);
+          if (commandHasEnded) {
+            delete state.redirectWriteEmitter;
+            state.lockDone?.();
+          }
+        } else {
+          const res = cleanLineBreaks(sData);
+          console.log('RES: ', JSON.stringify(res));
+
+          writeEmitter.fire(res);
+
+          if (commandHasEnded) {
+            state.lockDone?.();
+            updateDocs();
+          }
+        }
+      });
+      state.clips.stderr.on('data', (data) => {
+        const sData: string = data.toString();
+
+        console.log('DATA ERR: ', JSON.stringify(sData));
+
+        const prepare = (data: string) => colorRed(cleanLineBreaks(data));
+
+        if (state.redirectWriteEmitter) {
+          state.redirectWriteEmitter.fire([sData, prepare]);
+        } else {
+          writeEmitter.fire(prepare(sData));
+        }
+      });
+      state.clips.on('exit', () => {
+        closePty();
+        return closeEmitter.fire();
+      });
+      vscode.commands.executeCommand(
+        'setContext',
+        'clips-ide.terminalOpen',
+        true
+      );
+    },
+    close: closePty,
+    handleInput,
+  };
+
+  const terminalOptions: vscode.ExtensionTerminalOptions = {
+    name: 'CLIPS',
+    pty: clipsPty,
+  };
+
+  const termD = vscode.window.registerTerminalProfileProvider(
+    'clips-ide.clips-terminal',
+    {
+      provideTerminalProfile: () => new vscode.TerminalProfile(terminalOptions),
+    }
+  );
+
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
   const mainD = vscode.commands.registerCommand(
     'clips-ide.open-clips-env',
     async () => {
-      // The code you place here will be executed every time your command is executed
-
-      // If there is a prompt inside the data, we can assume that the command output ended
-      const commandEnded = (data: string) => data.includes('CLIPS>');
-
       const factsUri = vscode.Uri.parse('clips:facts');
       const agendaUri = vscode.Uri.parse('clips:agenda');
-
-      const updateDoc = (name: keyof typeof state.docs) => {
-        // Removes last two lines (Summary and prompt)
-        const cleanDoc = ([data, cleanLineBreaks]: RedirectData): string => {
-          if (data.startsWith('CLIPS>')) {
-            return '';
-          } else {
-            const summaryIndex = data.lastIndexOf('For a total of');
-            return cleanLineBreaks(data.slice(0, summaryIndex).trimEnd());
-          }
-        };
-
-        const emitter = new vscode.EventEmitter<RedirectData>();
-        emitter.event(([data, cleanLineBreaks]) => {
-          console.log(`DATA OUT (${name}): `, JSON.stringify(data));
-          state.docs[name] += data;
-          if (commandEnded(data)) {
-            state.docs[name] = cleanDoc([
-              state.docs[name] ?? '',
-              cleanLineBreaks,
-            ]);
-
-            myProvider.onDidChangeEmitter.fire(
-              vscode.Uri.parse(`clips:${name}`)
-            );
-          }
-        });
-
-        writeCommand(`(${name})`, false, () => {
-          state.docs[name] = '';
-          state.redirectWriteEmitter = emitter;
-        });
-      };
-
-      const updateDocs = () => {
-        updateDoc('facts');
-        updateDoc('agenda');
-      };
 
       updateDocs();
 
@@ -237,132 +366,9 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
       vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
 
-      const closePty = () => {
-        console.log('CLOSING PTY');
+      state.openEditors = [factsEditor, agendaEditor];
 
-        // Make sure that the shell is actually closed
-        state.clips?.kill();
-
-        vscode.commands.executeCommand(
-          'setContext',
-          'clips-ide.terminalOpen',
-          false
-        );
-
-        // The 'hide' method is deprecated, but it seems to be the only reasonable working solution (currently)
-        // reference: https://github.com/microsoft/vscode/issues/21617#issuecomment-283365406
-        [factsEditor, agendaEditor].forEach((e) => {
-          if (e.hide) {
-            return e.hide();
-          }
-          // Added an error message in case the method ever gets removed
-          return vscode.window.showErrorMessage(
-            'The window hiding functionality seems to be missing. This probably has to do with a VSCode update. Please report the issue to the developer.'
-          );
-        });
-
-        state.docs = {};
-      };
-
-      const cleanLineBreaks = (data: string) => data.replace(/\n/g, '\r\n');
-
-      const colorRed = (data: string) => '\x1b[31m' + data + '\x1b[0m';
-
-      const clipsPty: vscode.Pseudoterminal = {
-        onDidWrite: writeEmitter.event,
-        onDidClose: closeEmitter.event,
-        open: () => {
-          const versionCheckEmitter = new vscode.EventEmitter<RedirectData>();
-
-          versionCheckEmitter.event(([data, prepare]) => {
-            const version = /\((.*?)\s/.exec(data)?.[1];
-
-            console.log('VERSION: ', JSON.stringify(version));
-
-            const semverVersion = semver.coerce(version);
-
-            // If the CLIPS version is >= 6.40, assume that SIGINT works
-            // Note: semver needs the '.0' at the end to work
-            try {
-              state.sigintWorks =
-                semverVersion !== null && semver.gte(semverVersion, '6.40.0');
-            } catch (err) {
-              console.error('ERROR: ', err);
-            }
-            console.log('SIGINT WORKS: ', state.sigintWorks);
-
-            // Sends the data to the original emitter
-            writeEmitter.fire(prepare(data));
-          });
-
-          // Used to take the first line, where the version is printed
-          state.redirectWriteEmitter = versionCheckEmitter;
-
-          state.lock = new AsyncLock();
-          state.clips = spawn('clips');
-          state.clips.on('error', (err) => {
-            vscode.window.showErrorMessage(
-              'Fatal error. Check if CLIPS is installed.'
-            );
-            console.error('Error: ', err);
-            closeEmitter.fire();
-          });
-          state.clips.stdout.on('data', (data) => {
-            const sData: string = data.toString();
-
-            console.log('DATA OUT: ', JSON.stringify(sData));
-
-            const commandHasEnded = commandEnded(sData);
-
-            if (state.redirectWriteEmitter) {
-              state.redirectWriteEmitter.fire([sData, cleanLineBreaks]);
-              if (commandHasEnded) {
-                delete state.redirectWriteEmitter;
-                state.lockDone?.();
-              }
-            } else {
-              const res = cleanLineBreaks(sData);
-              console.log('RES: ', JSON.stringify(res));
-
-              writeEmitter.fire(res);
-
-              if (commandHasEnded) {
-                state.lockDone?.();
-                updateDocs();
-              }
-            }
-          });
-          state.clips.stderr.on('data', (data) => {
-            const sData: string = data.toString();
-
-            console.log('DATA ERR: ', JSON.stringify(sData));
-
-            const prepare = (data: string) => colorRed(cleanLineBreaks(data));
-
-            if (state.redirectWriteEmitter) {
-              state.redirectWriteEmitter.fire([sData, prepare]);
-            } else {
-              writeEmitter.fire(prepare(sData));
-            }
-          });
-          state.clips.on('exit', () => {
-            closePty();
-            return closeEmitter.fire();
-          });
-          vscode.commands.executeCommand(
-            'setContext',
-            'clips-ide.terminalOpen',
-            true
-          );
-        },
-        close: closePty,
-        handleInput,
-      };
-
-      const terminal = vscode.window.createTerminal({
-        name: 'CLIPS',
-        pty: clipsPty,
-      });
+      const terminal = vscode.window.createTerminal(terminalOptions);
 
       state.terminal = terminal;
 
@@ -427,7 +433,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(cmdD);
   });
 
-  context.subscriptions.push(mainD, docD, loadD, loadCD);
+  context.subscriptions.push(termD, mainD, docD, loadD, loadCD);
 }
 
 // this method is called when your extension is deactivated

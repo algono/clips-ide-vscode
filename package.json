@@ -16,7 +16,8 @@
 		"onCommand:clips-ide.load-current-file",
 		"onCommand:clips-ide.cmd-reset",
 		"onCommand:clips-ide.cmd-clear",
-		"onCommand:clips-ide.cmd-run"
+		"onCommand:clips-ide.cmd-run",
+		"onTerminalProfile:clips-ide.clips-terminal"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -136,7 +137,13 @@
 				"id": "clips-ide.menu-run",
 				"label": "Run options"
 			}
-		]
+		],
+		"terminal": {
+			"profiles": [{
+				"id": "clips-ide.clips-terminal",
+				"title": "CLIPS"
+			}]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
