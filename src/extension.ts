@@ -206,21 +206,21 @@ export function activate(context: vscode.ExtensionContext) {
 
   const updateDoc = (name: keyof typeof state.docs) => {
     // Removes last two lines (Summary and prompt)
-    const cleanDoc = ([data, cleanLineBreaks]: RedirectData): string => {
+    const cleanDoc = ([data, prepare]: RedirectData): string => {
       if (data.startsWith('CLIPS>')) {
         return '';
       } else {
         const summaryIndex = data.lastIndexOf('For a total of');
-        return cleanLineBreaks(data.slice(0, summaryIndex).trimEnd());
+        return prepare(data.slice(0, summaryIndex).trimEnd());
       }
     };
 
     const emitter = new vscode.EventEmitter<RedirectData>();
-    emitter.event(([data, cleanLineBreaks]) => {
+    emitter.event(([data, prepare]) => {
       console.log(`DATA OUT (${name}): `, JSON.stringify(data));
       state.docs[name] += data;
       if (commandEnded(data)) {
-        state.docs[name] = cleanDoc([state.docs[name] ?? '', cleanLineBreaks]);
+        state.docs[name] = cleanDoc([state.docs[name] ?? '', prepare]);
 
         myProvider.onDidChangeEmitter.fire(vscode.Uri.parse(`clips:${name}`));
       }
@@ -236,8 +236,6 @@ export function activate(context: vscode.ExtensionContext) {
     updateDoc('facts');
     updateDoc('agenda');
   };
-
-  const cleanLineBreaks = (data: string) => data.replace(/(?<!\r)\n/g, '\r\n');
 
   const colorRed = (data: string) => '\x1b[31m' + data + '\x1b[0m';
 
@@ -292,21 +290,20 @@ export function activate(context: vscode.ExtensionContext) {
           sData = sData.slice(2);
         }
 
-        let prepare = cleanLineBreaks;
+        let prepare = (data: string) => data;
 
         // If the data starts with '\r\n[' we can probably assume that it is an error
         // (because CLIPS outputs errors with lines starting with error codes like '[ERRORCODE]' and a line break before it)
         if (sData.startsWith('\r\n[')) {
           prepare = (data) => {
-            const cleanData = cleanLineBreaks(data);
-            const lineBreakIndex = cleanData.indexOf('\n', 3);
+            const lineBreakIndex = data.indexOf('\n', 3);
             if (lineBreakIndex >= 0) {
               return (
-                colorRed(cleanData.slice(0, lineBreakIndex + 1)) +
-                cleanData.slice(lineBreakIndex + 1)
+                colorRed(data.slice(0, lineBreakIndex + 1)) +
+                data.slice(lineBreakIndex + 1)
               );
             }
-            return colorRed(cleanData);
+            return colorRed(data);
           };
         }
 
