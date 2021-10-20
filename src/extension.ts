@@ -1,9 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import * as AsyncLock from 'async-lock';
-import * as semver from 'semver';
 import { getCoreNodeModule } from './util';
 
 import { IPty } from 'node-pty';
@@ -250,20 +248,19 @@ export function activate(context: vscode.ExtensionContext) {
       const versionCheckEmitter = new vscode.EventEmitter<RedirectData>();
 
       versionCheckEmitter.event(([data, prepare]) => {
-        const version = /\((.*?)\s/.exec(data)?.[1];
+        /**
+         * It looks like CLIPS considers '6.40' to be equivalent to '6.4', in which case '6.40 > 6.4' would be false.
+         * But string comparison seems to work exactly like CLIPS version number comparison except for that.
+         * '6.40 > 6.4' would be true, so we remove trailing zeros in the regex just to make sure it works for all cases.
+         */
+        const version = /\((.*?)0*\s/.exec(data)?.[1];
+        const minVersion = '6.4';
 
         console.log('VERSION: ', JSON.stringify(version));
 
-        const semverVersion = semver.coerce(version);
-
         // If the CLIPS version is >= 6.40, assume that SIGINT works
-        // Note: semver needs the '.0' at the end to work
-        try {
-          state.sigintWorks =
-            semverVersion !== null && semver.gte(semverVersion, '6.40.0');
-        } catch (err) {
-          console.error('ERROR: ', err);
-        }
+        state.sigintWorks = version !== undefined && version >= minVersion;
+
         console.log('SIGINT WORKS: ', state.sigintWorks);
 
         // Sends the data to the original emitter
