@@ -279,6 +279,8 @@ export function activate(context: vscode.ExtensionContext) {
       state.clips.onData((data) => {
         let sData: string = data.toString();
 
+        console.log('DATA OUT RAW: ', JSON.stringify(sData));
+
         // Input is echoed in output when using node-pty, so it needs to be removed
         // https://github.com/microsoft/node-pty/issues/78
         if (state.lastCmd && sData.startsWith(state.lastCmd)) {
@@ -290,18 +292,36 @@ export function activate(context: vscode.ExtensionContext) {
           sData = sData.slice(2);
         }
 
+        let prepare = cleanLineBreaks;
+
+        // If the data starts with '\r\n[' we can probably assume that it is an error
+        // (because CLIPS outputs errors with lines starting with error codes like '[ERRORCODE]' and a line break before it)
+        if (sData.startsWith('\r\n[')) {
+          prepare = (data) => {
+            const cleanData = cleanLineBreaks(data);
+            const lineBreakIndex = cleanData.indexOf('\n', 3);
+            if (lineBreakIndex >= 0) {
+              return (
+                colorRed(cleanData.slice(0, lineBreakIndex + 1)) +
+                cleanData.slice(lineBreakIndex + 1)
+              );
+            }
+            return colorRed(cleanData);
+          };
+        }
+
         console.log('DATA OUT: ', JSON.stringify(sData));
 
         const commandHasEnded = commandEnded(sData);
 
         if (state.redirectWriteEmitter) {
-          state.redirectWriteEmitter.fire([sData, cleanLineBreaks]);
+          state.redirectWriteEmitter.fire([sData, prepare]);
           if (commandHasEnded) {
             delete state.redirectWriteEmitter;
             state.lockDone?.();
           }
         } else {
-          const res = cleanLineBreaks(sData);
+          const res = prepare(sData);
           console.log('RES: ', JSON.stringify(res));
 
           writeEmitter.fire(res);
