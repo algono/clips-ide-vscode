@@ -4,11 +4,16 @@ import * as vscode from 'vscode';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import * as AsyncLock from 'async-lock';
 import * as semver from 'semver';
+import { getCoreNodeModule } from './util';
+
+import { IPty } from 'node-pty';
+const nodepty: typeof import('node-pty') = getCoreNodeModule('node-pty');
 
 type RedirectData = [string, (data: string) => string];
 
 const state: {
-  clips?: ChildProcessWithoutNullStreams;
+  clips?: IPty;
+  started?: boolean;
   lock?: AsyncLock;
   terminalHasLock?: boolean;
   lockDone?: Parameters<
@@ -23,6 +28,7 @@ const state: {
   terminal?: vscode.Terminal;
   sigintWorks?: boolean;
   openEditors?: vscode.TextEditor[];
+  lastCmd?: string;
 } = { docs: {} };
 
 // this method is called when your extension is activated
@@ -40,7 +46,9 @@ export function activate(context: vscode.ExtensionContext) {
   ) => {
     const write = () => {
       before?.();
-      return state.clips?.stdin.write(cmd + '\r\n');
+      const fullCmd = cmd + '\r\n';
+      state.lastCmd = fullCmd;
+      return state.clips?.write(fullCmd);
     };
 
     // If the terminal already had the lock, bypass it
@@ -171,6 +179,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Make sure that the shell is actually closed
     state.clips?.kill();
 
+    state.started = false;
+
     vscode.commands.executeCommand(
       'setContext',
       'clips-ide.terminalOpen',
@@ -264,16 +274,24 @@ export function activate(context: vscode.ExtensionContext) {
       state.redirectWriteEmitter = versionCheckEmitter;
 
       state.lock = new AsyncLock();
-      state.clips = spawn('clips');
-      state.clips.on('error', (err) => {
-        vscode.window.showErrorMessage(
-          'Fatal error. Check if CLIPS is installed.'
-        );
-        console.error('Error: ', err);
-        closeEmitter.fire();
-      });
-      state.clips.stdout.on('data', (data) => {
-        const sData: string = data.toString();
+      state.clips = nodepty.spawn('clips', [], {});
+
+      // Idea from: https://github.com/microsoft/node-pty/issues/74#issuecomment-295520624
+      setTimeout(() => (state.started = true), 500);
+
+      state.clips.onData((data) => {
+        let sData: string = data.toString();
+
+        // Input is echoed in output when using node-pty, so it needs to be removed
+        // https://github.com/microsoft/node-pty/issues/78
+        if (state.lastCmd && sData.startsWith(state.lastCmd)) {
+          sData = sData.slice(state.lastCmd.length);
+        }
+
+        // It seems like node-pty adds an extra line break to the output
+        if (sData.startsWith('\r\n')) {
+          sData = sData.slice(2);
+        }
 
         console.log('DATA OUT: ', JSON.stringify(sData));
 
@@ -297,20 +315,13 @@ export function activate(context: vscode.ExtensionContext) {
           }
         }
       });
-      state.clips.stderr.on('data', (data) => {
-        const sData: string = data.toString();
-
-        console.log('DATA ERR: ', JSON.stringify(sData));
-
-        const prepare = (data: string) => colorRed(cleanLineBreaks(data));
-
-        if (state.redirectWriteEmitter) {
-          state.redirectWriteEmitter.fire([sData, prepare]);
-        } else {
-          writeEmitter.fire(prepare(sData));
+      state.clips.onExit(() => {
+        if (!state.started) {
+          vscode.window.showErrorMessage(
+            'Fatal error. Check if CLIPS is installed.'
+          );
         }
-      });
-      state.clips.on('exit', () => {
+
         closePty();
         return closeEmitter.fire();
       });

@@ -139,10 +139,12 @@
 			}
 		],
 		"terminal": {
-			"profiles": [{
-				"id": "clips-ide.clips-terminal",
-				"title": "CLIPS"
-			}]
+			"profiles": [
+				{
+					"id": "clips-ide.clips-terminal",
+					"title": "CLIPS"
+				}
+			]
 		}
 	},
 	"scripts": {
@@ -166,6 +168,7 @@
 		"eslint": "^7.32.0",
 		"glob": "^7.1.7",
 		"mocha": "^9.1.1",
+		"node-pty": "^0.10.1",
 		"typescript": "^4.4.3"
 	},
 	"dependencies": {
