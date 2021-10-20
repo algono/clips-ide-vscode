@@ -237,7 +237,7 @@ export function activate(context: vscode.ExtensionContext) {
     updateDoc('agenda');
   };
 
-  const cleanLineBreaks = (data: string) => data.replace(/\n/g, '\r\n');
+  const cleanLineBreaks = (data: string) => data.replace(/(?<!\r)\n/g, '\r\n');
 
   const colorRed = (data: string) => '\x1b[31m' + data + '\x1b[0m';
 
