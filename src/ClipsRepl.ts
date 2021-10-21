@@ -35,7 +35,8 @@ export default class ClipsRepl {
 
   docs: ClipsDocs;
 
-  private ptyDef: vscode.Pseudoterminal;
+  private readonly ptyDef: vscode.Pseudoterminal;
+  readonly terminalOptions;
 
   constructor() {
     this.docs = new ClipsDocs(this);
@@ -142,6 +143,11 @@ export default class ClipsRepl {
       close: this.closePty,
       handleInput: handlerInput.handle,
     };
+
+    this.terminalOptions = {
+      name: 'CLIPS',
+      pty: this.ptyDef,
+    };
   }
 
   writeCommand = (cmd: string, isTerminal: boolean, before?: () => any) => {
@@ -190,24 +196,15 @@ export default class ClipsRepl {
     this.docs.close();
   }
 
-  getTerminalOptions(): vscode.ExtensionTerminalOptions {
-    return {
-      name: 'CLIPS',
-      pty: this.ptyDef,
-    };
-  }
-
   createTerminal(): vscode.Terminal {
-    return (this.terminal = vscode.window.createTerminal(
-      this.getTerminalOptions()
-    ));
+    return (this.terminal = vscode.window.createTerminal(this.terminalOptions));
   }
 
-  updateTerminal(t: vscode.Terminal | undefined) {
-    if (t && this.getTerminalOptions() === t.creationOptions) {
+  updateTerminal = (t: vscode.Terminal | undefined) => {
+    if (t && this.terminalOptions === t.creationOptions) {
       this.terminal = t;
     }
-  }
+  };
 
   hasTerminal() {
     return this.terminal !== undefined;

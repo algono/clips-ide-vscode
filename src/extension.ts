@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
     state.clips.docs.myProvider
   );
 
-  const terminalOptions = state.clips.getTerminalOptions();
+  const terminalOptions = state.clips.terminalOptions;
 
   const termD = vscode.window.registerTerminalProfileProvider(
     'clips-ide.clips-terminal',
