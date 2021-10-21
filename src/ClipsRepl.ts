@@ -29,7 +29,7 @@ export default class ClipsRepl {
   >[0];
   private writeEmitter: vscode.EventEmitter<string>;
   redirectWriteEmitter?: vscode.EventEmitter<RedirectData>;
-  
+
   private terminal?: vscode.Terminal;
   private lastCmd?: string;
 
@@ -166,7 +166,7 @@ export default class ClipsRepl {
       this.terminalHasLock = isTerminal;
       write();
     });
-  }
+  };
 
   sendCommand(cmd: string) {
     this.terminal?.sendText(`(${cmd})`);
@@ -185,7 +185,7 @@ export default class ClipsRepl {
       'setContext',
       'clips-ide.terminalOpen',
       false
-    ); 
+    );
 
     this.docs.close();
   }

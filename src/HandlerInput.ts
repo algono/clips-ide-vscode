@@ -6,7 +6,10 @@ export default class HandlerInput {
   private pos = 0;
   sigintWorks = false;
 
-  constructor(private writeEmitter: EventEmitter<string>, private writeCommand: InstanceType<typeof ClipsRepl>['writeCommand']) {}
+  constructor(
+    private writeEmitter: EventEmitter<string>,
+    private writeCommand: InstanceType<typeof ClipsRepl>['writeCommand']
+  ) {}
 
   handle = (data: string): void => {
     console.log('LINE:', JSON.stringify(this.line));
@@ -93,5 +96,5 @@ export default class HandlerInput {
     }
 
     this.writeEmitter.fire(data);
-  }
+  };
 }

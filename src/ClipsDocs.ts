@@ -51,7 +51,9 @@ export default class ClipsDocs {
       if (commandEnded(data)) {
         this.docs[name] = cleanDoc([this.docs[name] ?? '', prepare]);
 
-        this.myProvider.onDidChangeEmitter.fire(vscode.Uri.parse(`clips:${name}`));
+        this.myProvider.onDidChangeEmitter.fire(
+          vscode.Uri.parse(`clips:${name}`)
+        );
       }
     });
 
