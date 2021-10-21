@@ -187,14 +187,16 @@ export function activate(context: vscode.ExtensionContext) {
 
     // The 'hide' method is deprecated, but it seems to be the only reasonable working solution (currently)
     // reference: https://github.com/microsoft/vscode/issues/21617#issuecomment-283365406
-    state.openEditors?.forEach((e) => {
+    state.openEditors?.every((e) => {
       if (e.hide) {
-        return e.hide();
+        e.hide();
+        return true;
       }
       // Added an error message in case the method ever gets removed
-      return vscode.window.showErrorMessage(
+      vscode.window.showErrorMessage(
         'The window hiding functionality seems to be missing. This probably has to do with a VSCode update. Please report the issue to the developer.'
       );
+      return false;
     });
 
     state.docs = {};
