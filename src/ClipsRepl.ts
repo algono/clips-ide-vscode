@@ -175,8 +175,8 @@ export default class ClipsRepl {
   };
 
   sendCommand(cmd: string) {
-    this.terminal?.sendText(`(${cmd})`);
-    this.terminal?.sendText('\r');
+    this.terminal?.sendText(`(${cmd})`, false);
+    this.terminal?.sendText('\r', false);
   }
 
   closePty() {
