@@ -72,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
   const mainD = vscode.commands.registerCommand(
     'clips-ide.open-clips-env',
     async () => {
-      state.docs?.open();
+      await state.docs?.open();
 
       const clips = createRepl();
       const terminal = clips.createTerminal();
