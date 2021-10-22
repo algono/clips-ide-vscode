@@ -40,10 +40,10 @@ export default class ClipsRepl {
 
   constructor() {
     this.writeEmitter = new vscode.EventEmitter<string>();
-    
+
     this.commandEmitter = new vscode.EventEmitter<void>();
     this.closeEmitter = new vscode.EventEmitter<void>();
-    
+
     const ptyCloseEmitter = new vscode.EventEmitter<void>();
 
     const handlerInput = new HandlerInput(this.writeEmitter, this.writeCommand);
@@ -65,7 +65,6 @@ export default class ClipsRepl {
         // Used to take the first line, where the version is printed
         this.redirectWriteEmitter = versionCheckEmitter;
 
-        this.lock = new AsyncLock();
         this.clips = nodepty.spawn('clips', [], {});
 
         // Idea from: https://github.com/microsoft/node-pty/issues/74#issuecomment-295520624
@@ -150,6 +149,14 @@ export default class ClipsRepl {
       name: 'CLIPS',
       pty: this.ptyDef,
     };
+
+    // Create the CLIPS lock and acquire it on terminal open, as commands cannot be sent until the REPL is ready
+    vscode.window.onDidOpenTerminal((t) => {
+      if (this.equalsTerminal(t)) {
+        this.lock = new AsyncLock();
+        this.lock?.acquire('clips', (done) => (this.lockDone = done));
+      }
+    });
   }
 
   writeCommand = (cmd: string, isTerminal: boolean, before?: () => any) => {
@@ -186,6 +193,7 @@ export default class ClipsRepl {
 
     // Make sure that the shell is actually closed
     this.clips?.kill();
+    this.lockDone?.();
 
     this.started = false;
 
@@ -202,18 +210,24 @@ export default class ClipsRepl {
     return (this.terminal = vscode.window.createTerminal(this.terminalOptions));
   }
 
+  hasTerminal() {
+    return this.terminal !== undefined;
+  }
+
+  equalsTerminal(other: vscode.Terminal) {
+    return this.terminalOptions === other.creationOptions;
+  }
+
   updateTerminal = (t: vscode.Terminal | undefined) => {
-    if (t && this.terminalOptions === t.creationOptions) {
+    if (t && this.equalsTerminal(t)) {
       this.terminal = t;
       return true;
     }
     return false;
   };
 
-  hasTerminal() {
-    return this.terminal !== undefined;
-  }
-
-  onCommand = (...args: Parameters<vscode.Event<void>>) => this.commandEmitter.event(...args);
-  onClose = (...args: Parameters<vscode.Event<void>>) => this.closeEmitter.event(...args);
+  onCommand = (...args: Parameters<vscode.Event<void>>) =>
+    this.commandEmitter.event(...args);
+  onClose = (...args: Parameters<vscode.Event<void>>) =>
+    this.closeEmitter.event(...args);
 }

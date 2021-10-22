@@ -14,7 +14,7 @@ function createRepl() {
   const clips = new ClipsRepl();
 
   state.clips = clips;
-  state.instances.push(state.clips);
+  state.instances.push(clips);
 
   clips.onCommand(() => clips === state.clips && state.docs?.updateDocs());
   clips.onClose(() => clips === state.clips && state.docs?.close());
@@ -53,15 +53,13 @@ export function activate(context: vscode.ExtensionContext) {
         state.clips = c;
         if (state.docs) {
           state.docs.repl = c;
+          state.docs.updateDocs();
         }
         return true;
       }
       return false;
     });
   };
-
-  // When opening the CLIPS terminal via profile, this is the only way to retrieve the terminal object
-  vscode.window.onDidOpenTerminal(updateActiveRepl);
 
   // If multiple CLIPS terminals are open, we should only use the last active one
   vscode.window.onDidChangeActiveTerminal(updateActiveRepl);
