@@ -12,7 +12,7 @@ export default class ClipsDocs {
   myProvider;
   private openEditors?: vscode.TextEditor[];
 
-  constructor(private repl: ClipsRepl) {
+  constructor(public repl?: ClipsRepl) {
     this.myProvider = this.createProvider();
   }
 
@@ -57,9 +57,11 @@ export default class ClipsDocs {
       }
     });
 
-    this.repl.writeCommand(`(${name})`, false, () => {
+    this.repl?.writeCommand(`(${name})`, false, () => {
       this.docs[name] = '';
-      this.repl.redirectWriteEmitter = emitter;
+      if (this.repl) {
+        this.repl.redirectWriteEmitter = emitter;
+      }
     });
   };
 

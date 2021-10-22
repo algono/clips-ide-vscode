@@ -1,36 +1,64 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import ClipsDocs from './ClipsDocs';
 import ClipsRepl from './ClipsRepl';
 
 const state: {
   clips?: ClipsRepl;
-} = {};
+  docs?: ClipsDocs;
+  instances: ClipsRepl[];
+} = { instances: [] };
+
+function createRepl() {
+  state.clips = new ClipsRepl(state.docs);
+  state.instances.push(state.clips);
+  return state.clips;
+}
+
+function initDocs() {
+  state.docs = new ClipsDocs(state.clips);
+  return state.docs;
+}
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  state.clips = new ClipsRepl();
+  const docs = initDocs();
 
   const docD = vscode.workspace.registerTextDocumentContentProvider(
     'clips',
-    state.clips.docs.myProvider
+    docs.myProvider
   );
-
-  const terminalOptions = state.clips.terminalOptions;
 
   const termD = vscode.window.registerTerminalProfileProvider(
     'clips-ide.clips-terminal',
     {
-      provideTerminalProfile: () => new vscode.TerminalProfile(terminalOptions),
+      provideTerminalProfile: () => {
+        const clips = createRepl();
+        return new vscode.TerminalProfile(clips.terminalOptions);
+      },
     }
   );
 
+  const updateActiveRepl = (t: vscode.Terminal | undefined) => {
+    return state.instances.some((c) => {
+      if (c.updateTerminal(t)) {
+        state.clips = c;
+        if (state.docs) {
+          state.docs.repl = c;
+        }
+        return true;
+      }
+      return false;
+    });
+  };
+
   // When opening the CLIPS terminal via profile, this is the only way to retrieve the terminal object
-  vscode.window.onDidOpenTerminal(state.clips.updateTerminal);
+  vscode.window.onDidOpenTerminal(updateActiveRepl);
 
   // If multiple CLIPS terminals are open, we should only use the last active one
-  vscode.window.onDidChangeActiveTerminal(state.clips.updateTerminal);
+  vscode.window.onDidChangeActiveTerminal(updateActiveRepl);
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
@@ -38,11 +66,12 @@ export function activate(context: vscode.ExtensionContext) {
   const mainD = vscode.commands.registerCommand(
     'clips-ide.open-clips-env',
     async () => {
-      state.clips?.docs.open();
+      state.docs?.open();
 
-      const terminal = state.clips?.createTerminal();
+      const clips = createRepl();
+      const terminal = clips.createTerminal();
 
-      terminal?.show();
+      terminal.show();
 
       if (terminal) {
         context.subscriptions.push(terminal);
@@ -105,5 +134,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-  state.clips?.closePty();
+  state.instances.forEach((c) => c.closePty());
 }

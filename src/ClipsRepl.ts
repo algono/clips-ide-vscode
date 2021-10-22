@@ -33,12 +33,10 @@ export default class ClipsRepl {
   private terminal?: vscode.Terminal;
   private lastCmd?: string;
 
-  docs: ClipsDocs;
-
   private readonly ptyDef: vscode.Pseudoterminal;
   readonly terminalOptions;
 
-  constructor() {
+  constructor(private docs?: ClipsDocs) {
     this.docs = new ClipsDocs(this);
 
     this.writeEmitter = new vscode.EventEmitter<string>();
@@ -120,7 +118,7 @@ export default class ClipsRepl {
 
             if (commandHasEnded) {
               this.lockDone?.();
-              this.docs.updateDocs();
+              this.docs?.updateDocs();
             }
           }
         });
@@ -193,7 +191,7 @@ export default class ClipsRepl {
       false
     );
 
-    this.docs.close();
+    this.docs?.close();
   }
 
   createTerminal(): vscode.Terminal {
@@ -203,7 +201,9 @@ export default class ClipsRepl {
   updateTerminal = (t: vscode.Terminal | undefined) => {
     if (t && this.terminalOptions === t.creationOptions) {
       this.terminal = t;
+      return true;
     }
+    return false;
   };
 
   hasTerminal() {
