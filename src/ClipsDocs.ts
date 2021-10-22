@@ -16,7 +16,17 @@ class ClipsDoc {
 
   clear = () => (this.content = '');
 
+  getUri = () => `clips:${this.name}`;
+
+  isVisible = () => vscode.window.visibleTextEditors.some(
+    (e) => e.document.uri.toString() === this.getUri()
+  );
+
   updateDoc = () => {
+    if (!this.isVisible()) {
+      return;
+    }
+
     // Removes last two lines (Summary and prompt)
     const cleanDoc = ([data, prepare]: RedirectData): string => {
       if (data.startsWith('CLIPS>')) {
@@ -34,7 +44,7 @@ class ClipsDoc {
       if (commandEnded(data)) {
         this.content = cleanDoc([this.content, prepare]);
 
-        this.onDidChangeEmitter.fire(vscode.Uri.parse(`clips:${this.name}`));
+        this.onDidChangeEmitter.fire(vscode.Uri.parse(this.getUri()));
       }
     });
 
