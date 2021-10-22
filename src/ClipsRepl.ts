@@ -8,7 +8,6 @@ const nodepty: typeof import('node-pty') = getCoreNodeModule('node-pty');
 import { RedirectData } from './logic';
 import HandlerInput from './HandlerInput';
 import VersionChecker from './VersionChecker';
-import ClipsDocs from './ClipsDocs';
 
 // If there is a prompt inside the data, we can assume that the command output ended
 export function commandEnded(data: string) {
@@ -36,11 +35,16 @@ export default class ClipsRepl {
   private readonly ptyDef: vscode.Pseudoterminal;
   readonly terminalOptions;
 
-  constructor(private docs?: ClipsDocs) {
-    this.docs = new ClipsDocs(this);
+  private readonly commandEmitter: vscode.EventEmitter<void>;
+  private readonly closeEmitter: vscode.EventEmitter<void>;
 
+  constructor() {
     this.writeEmitter = new vscode.EventEmitter<string>();
-    const closeEmitter = new vscode.EventEmitter<void>();
+    
+    this.commandEmitter = new vscode.EventEmitter<void>();
+    this.closeEmitter = new vscode.EventEmitter<void>();
+    
+    const ptyCloseEmitter = new vscode.EventEmitter<void>();
 
     const handlerInput = new HandlerInput(this.writeEmitter, this.writeCommand);
 
@@ -51,7 +55,7 @@ export default class ClipsRepl {
 
     this.ptyDef = {
       onDidWrite: this.writeEmitter.event,
-      onDidClose: closeEmitter.event,
+      onDidClose: ptyCloseEmitter.event,
       open: () => {
         const versionCheckEmitter = VersionChecker.setup(
           this.writeEmitter,
@@ -118,7 +122,7 @@ export default class ClipsRepl {
 
             if (commandHasEnded) {
               this.lockDone?.();
-              this.docs?.updateDocs();
+              this.commandEmitter.fire();
             }
           }
         });
@@ -130,7 +134,7 @@ export default class ClipsRepl {
           }
 
           this.closePty();
-          return closeEmitter.fire();
+          return ptyCloseEmitter.fire();
         });
         vscode.commands.executeCommand(
           'setContext',
@@ -191,7 +195,7 @@ export default class ClipsRepl {
       false
     );
 
-    this.docs?.close();
+    this.closeEmitter.fire();
   }
 
   createTerminal(): vscode.Terminal {
@@ -209,4 +213,7 @@ export default class ClipsRepl {
   hasTerminal() {
     return this.terminal !== undefined;
   }
+
+  onCommand = (...args: Parameters<vscode.Event<void>>) => this.commandEmitter.event(...args);
+  onClose = (...args: Parameters<vscode.Event<void>>) => this.closeEmitter.event(...args);
 }

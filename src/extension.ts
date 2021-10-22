@@ -11,9 +11,15 @@ const state: {
 } = { instances: [] };
 
 function createRepl() {
-  state.clips = new ClipsRepl(state.docs);
+  const clips = new ClipsRepl();
+
+  state.clips = clips;
   state.instances.push(state.clips);
-  return state.clips;
+
+  clips.onCommand(() => clips === state.clips && state.docs?.updateDocs());
+  clips.onClose(() => clips === state.clips && state.docs?.close());
+
+  return clips;
 }
 
 function initDocs() {
