@@ -2,38 +2,21 @@ import * as vscode from 'vscode';
 import ClipsRepl, { commandEnded } from './ClipsRepl';
 import { RedirectData } from './logic';
 
-interface Docs {
-  facts?: string;
-  agenda?: string;
-}
+const docNames = ['facts', 'agenda'] as const;
+type DocNames = typeof docNames[number];
 
-export default class ClipsDocs {
-  private docs: Docs = {};
-  myProvider;
-  private openEditors?: vscode.TextEditor[];
+class ClipsDoc {
+  content: string = '';
 
-  constructor(public repl?: ClipsRepl) {
-    this.myProvider = this.createProvider();
-  }
+  constructor(
+    private name: DocNames,
+    private onDidChangeEmitter: vscode.EventEmitter<vscode.Uri>,
+    private getRepl: () => ClipsRepl | undefined
+  ) {}
 
-  private createProvider() {
-    const thisObj = this;
-    return new (class implements vscode.TextDocumentContentProvider {
-      onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
-      onDidChange = this.onDidChangeEmitter.event;
-      provideTextDocumentContent(uri: vscode.Uri): string {
-        const contentType = uri.path;
-        if (contentType in thisObj.docs) {
-          const content = thisObj.docs[contentType as keyof Docs];
-          console.log('PROVIDING: ', content);
-          return content ?? '';
-        }
-        return '';
-      }
-    })();
-  }
+  clear = () => (this.content = '');
 
-  updateDoc = (name: keyof Docs) => {
+  updateDoc = () => {
     // Removes last two lines (Summary and prompt)
     const cleanDoc = ([data, prepare]: RedirectData): string => {
       if (data.startsWith('CLIPS>')) {
@@ -46,28 +29,72 @@ export default class ClipsDocs {
 
     const emitter = new vscode.EventEmitter<RedirectData>();
     emitter.event(([data, prepare]) => {
-      console.log(`DATA OUT (${name}): `, JSON.stringify(data));
-      this.docs[name] += data;
+      console.log(`DATA OUT (${this.name}): `, JSON.stringify(data));
+      this.content += data;
       if (commandEnded(data)) {
-        this.docs[name] = cleanDoc([this.docs[name] ?? '', prepare]);
+        this.content = cleanDoc([this.content, prepare]);
 
-        this.myProvider.onDidChangeEmitter.fire(
-          vscode.Uri.parse(`clips:${name}`)
-        );
+        this.onDidChangeEmitter.fire(vscode.Uri.parse(`clips:${this.name}`));
       }
     });
 
-    this.repl?.writeCommand(`(${name})`, false, () => {
-      this.docs[name] = '';
-      if (this.repl) {
-        this.repl.redirectWriteEmitter = emitter;
+    const repl = this.getRepl();
+
+    repl?.writeCommand(`(${this.name})`, false, () => {
+      this.content = '';
+      if (repl) {
+        repl.redirectWriteEmitter = emitter;
       }
     });
   };
+}
+
+export default class ClipsDocs {
+  private docs: { [k in DocNames]: ClipsDoc };
+  myProvider;
+  private openEditors?: vscode.TextEditor[];
+
+  constructor(private repl?: ClipsRepl) {
+    this.myProvider = this.createProvider();
+
+    const docs: Partial<typeof this.docs> = {};
+    docNames.forEach((name) => {
+      docs[name] = new ClipsDoc(
+        name,
+        this.myProvider.onDidChangeEmitter,
+        () => this.repl
+      );
+    });
+    // TypeScript can't infer that the previous forEach filled all the required properties,
+    // so we assure the type system that it did
+    this.docs = docs as typeof this.docs;
+  }
+
+  setRepl = (repl: ClipsRepl) => {
+    this.repl = repl;
+  };
+
+  private createProvider() {
+    const thisObj = this;
+    return new (class implements vscode.TextDocumentContentProvider {
+      onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+      onDidChange = this.onDidChangeEmitter.event;
+      provideTextDocumentContent(uri: vscode.Uri): string {
+        const contentType = uri.path;
+        if (contentType in thisObj.docs) {
+          const content = thisObj.docs[contentType as DocNames].content;
+          console.log('PROVIDING: ', content);
+          return content ?? '';
+        }
+        return '';
+      }
+    })();
+  }
 
   updateDocs = () => {
-    this.updateDoc('facts');
-    this.updateDoc('agenda');
+    for (const docName in this.docs) {
+      this.docs[docName as DocNames].updateDoc();
+    }
   };
 
   async open() {
@@ -113,7 +140,9 @@ export default class ClipsDocs {
       return false;
     });
 
-    this.docs = {};
+    for (const docName in this.docs) {
+      this.docs[docName as DocNames].clear();
+    }
     delete this.openEditors;
   }
 }

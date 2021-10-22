@@ -52,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (c.updateTerminal(t)) {
         state.clips = c;
         if (state.docs) {
-          state.docs.repl = c;
+          state.docs.setRepl(c);
           state.docs.updateDocs();
         }
         return true;
