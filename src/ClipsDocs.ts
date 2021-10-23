@@ -123,7 +123,7 @@ export default class ClipsDocs {
 
   private async openDoc(
     name: DocName,
-    options?: vscode.TextDocumentShowOptions
+    options: vscode.TextDocumentShowOptions = { preview: false }
   ) {
     let doc = this.docs[name];
     if (!doc) {
@@ -137,6 +137,8 @@ export default class ClipsDocs {
     if (editor) {
       this.openEditors.push(editor);
     }
+
+    doc.updateDoc();
   }
 
   async open() {
@@ -148,13 +150,11 @@ export default class ClipsDocs {
     // Split the previous and next document horizontally
     await vscode.commands.executeCommand('workbench.action.newGroupBelow');
 
-    await this.openDoc('agenda', { preview: false });
+    await this.openDoc('agenda');
 
     // Give focus to the original group by focusing the previous one once for each editor the extension creates
     vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
     vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
-
-    this.updateDocs();
   }
 
   close() {
@@ -180,5 +180,23 @@ export default class ClipsDocs {
 
   dispose() {
     this.myProvider.onDidChangeEmitter.dispose();
+  }
+
+  registerOpenCommands() {
+    const disposables: vscode.Disposable[] = [];
+    for (const name of docNames) {
+      disposables.push(
+        vscode.commands.registerCommand(
+          'clips-ide.open-doc-' + name,
+          async () => {
+            await this.openDoc(name, {
+              preview: false,
+              viewColumn: vscode.ViewColumn.Beside,
+            });
+          }
+        )
+      );
+    }
+    return disposables;
   }
 }

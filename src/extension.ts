@@ -159,6 +159,8 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(cmdD);
   });
 
+  const docsD = docs.registerOpenCommands();
+
   context.subscriptions.push(
     termD,
     mainD,
@@ -167,7 +169,8 @@ export function activate(context: vscode.ExtensionContext) {
     loadCD,
     activeD,
     docs,
-    termCD
+    termCD,
+    ...docsD
   );
 }
 

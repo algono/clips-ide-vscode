@@ -11,6 +11,7 @@
 		"Other"
 	],
 	"activationEvents": [
+		"onTerminalProfile:clips-ide.clips-terminal",
 		"onCommand:clips-ide.open-clips-env",
 		"onCommand:clips-ide.open-terminal",
 		"onCommand:clips-ide.load-file",
@@ -18,7 +19,8 @@
 		"onCommand:clips-ide.cmd-reset",
 		"onCommand:clips-ide.cmd-clear",
 		"onCommand:clips-ide.cmd-run",
-		"onTerminalProfile:clips-ide.clips-terminal"
+		"onCommand:clips-ide.open-doc-facts",
+		"onCommand:clips-ide.open-doc-agenda"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -78,6 +80,18 @@
 				"command": "clips-ide.cmd-run",
 				"category": "CLIPS Command",
 				"title": "Run",
+				"enablement": "clips-ide.terminalOpen"
+			},
+			{
+				"command": "clips-ide.open-doc-facts",
+				"category": "CLIPS Window",
+				"title": "Facts",
+				"enablement": "clips-ide.terminalOpen"
+			},
+			{
+				"command": "clips-ide.open-doc-agenda",
+				"category": "CLIPS Window",
+				"title": "Agenda",
 				"enablement": "clips-ide.terminalOpen"
 			}
 		],
