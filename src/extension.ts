@@ -21,6 +21,11 @@ function createRepl() {
     // Remove REPL from instances list if it is being closed
     state.instances = state.instances.filter((i) => i !== clips);
 
+    // and from the active variable
+    if (clips === state.clips) {
+      state.clips = undefined;
+    }
+
     // If the REPL being closed is the last one, close the docs
     state.instances.length === 0 && state.docs?.close();
   });
