@@ -121,7 +121,10 @@ export default class ClipsDocs {
     }
   };
 
-  private async openDoc(name: DocName, options?: vscode.TextDocumentShowOptions) {
+  private async openDoc(
+    name: DocName,
+    options?: vscode.TextDocumentShowOptions
+  ) {
     let doc = this.docs[name];
     if (!doc) {
       doc = this.createDoc(name);
@@ -137,12 +140,15 @@ export default class ClipsDocs {
   }
 
   async open() {
-    await this.openDoc('facts');
+    await this.openDoc('facts', {
+      preview: false,
+      viewColumn: vscode.ViewColumn.Beside,
+    });
 
     // Split the previous and next document horizontally
     await vscode.commands.executeCommand('workbench.action.newGroupBelow');
 
-    await this.openDoc('agenda');
+    await this.openDoc('agenda', { preview: false });
 
     // Give focus to the original group by focusing the previous one once for each editor the extension creates
     vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
