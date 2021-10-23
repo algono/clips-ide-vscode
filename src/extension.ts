@@ -82,6 +82,17 @@ export function activate(context: vscode.ExtensionContext) {
   // If multiple CLIPS terminals are open, we should only use the last active one
   const activeD = vscode.window.onDidChangeActiveTerminal(updateActiveRepl);
 
+  const openTerminal = () => {
+    const clips = createRepl();
+    const terminal = clips.createTerminal();
+
+    terminal.show();
+
+    if (terminal) {
+      context.subscriptions.push(terminal);
+    }
+  };
+
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
@@ -89,16 +100,13 @@ export function activate(context: vscode.ExtensionContext) {
     'clips-ide.open-clips-env',
     async () => {
       await state.docs?.open();
-
-      const clips = createRepl();
-      const terminal = clips.createTerminal();
-
-      terminal.show();
-
-      if (terminal) {
-        context.subscriptions.push(terminal);
-      }
+      openTerminal();
     }
+  );
+
+  const termCD = vscode.commands.registerCommand(
+    'clips-ide.open-terminal',
+    openTerminal
   );
 
   const loadD = vscode.commands.registerCommand(
@@ -151,7 +159,16 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(cmdD);
   });
 
-  context.subscriptions.push(termD, mainD, docD, loadD, loadCD, activeD, docs);
+  context.subscriptions.push(
+    termD,
+    mainD,
+    docD,
+    loadD,
+    loadCD,
+    activeD,
+    docs,
+    termCD
+  );
 }
 
 // this method is called when your extension is deactivated

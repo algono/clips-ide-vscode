@@ -12,6 +12,7 @@
 	],
 	"activationEvents": [
 		"onCommand:clips-ide.open-clips-env",
+		"onCommand:clips-ide.open-terminal",
 		"onCommand:clips-ide.load-file",
 		"onCommand:clips-ide.load-current-file",
 		"onCommand:clips-ide.cmd-reset",
@@ -43,6 +44,11 @@
 					"light": "media/clipslogo.png",
 					"dark": "media/clipslogo_inverted.png"
 				}
+			},
+			{
+				"command": "clips-ide.open-terminal",
+				"category": "CLIPS",
+				"title": "Open Terminal"
 			},
 			{
 				"command": "clips-ide.load-file",
