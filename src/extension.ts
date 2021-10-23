@@ -139,7 +139,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(cmdD);
   });
 
-  context.subscriptions.push(termD, mainD, docD, loadD, loadCD, activeD);
+  context.subscriptions.push(termD, mainD, docD, loadD, loadCD, activeD, docs);
 }
 
 // this method is called when your extension is deactivated

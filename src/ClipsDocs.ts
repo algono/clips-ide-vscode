@@ -18,12 +18,18 @@ class ClipsDoc {
 
   getUri = () => `clips:${this.name}`;
 
-  isVisible = () => vscode.window.visibleTextEditors.some(
-    (e) => e.document.uri.toString() === this.getUri()
-  );
+  isVisible = () =>
+    vscode.window.visibleTextEditors.some(
+      (e) => e.document.uri.toString() === this.getUri()
+    );
 
   updateDoc = () => {
     if (!this.isVisible()) {
+      return;
+    }
+
+    const repl = this.getRepl();
+    if (!repl) {
       return;
     }
 
@@ -48,13 +54,9 @@ class ClipsDoc {
       }
     });
 
-    const repl = this.getRepl();
-
-    repl?.writeCommand(`(${this.name})`, false, () => {
+    repl.writeCommand(`(${this.name})`, false, () => {
       this.content = '';
-      if (repl) {
-        repl.redirectWriteEmitter = emitter;
-      }
+      repl.redirectWriteEmitter = emitter;
     });
   };
 }
@@ -154,5 +156,9 @@ export default class ClipsDocs {
       this.docs[docName as DocNames].clear();
     }
     delete this.openEditors;
+  }
+
+  dispose() {
+    this.myProvider.onDidChangeEmitter.dispose();
   }
 }

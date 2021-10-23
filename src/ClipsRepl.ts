@@ -38,6 +38,8 @@ export default class ClipsRepl {
   private readonly commandEmitter: vscode.EventEmitter<void>;
   private readonly closeEmitter: vscode.EventEmitter<void>;
 
+  private onOpenDisposable?: vscode.Disposable;
+
   constructor() {
     this.writeEmitter = new vscode.EventEmitter<string>();
 
@@ -112,6 +114,7 @@ export default class ClipsRepl {
           if (this.redirectWriteEmitter) {
             this.redirectWriteEmitter.fire([sData, prepare]);
             if (commandHasEnded) {
+              this.redirectWriteEmitter.dispose();
               delete this.redirectWriteEmitter;
               this.lockDone?.();
             }
@@ -152,7 +155,7 @@ export default class ClipsRepl {
     };
 
     // Create the CLIPS lock and acquire it on terminal open, as commands cannot be sent until the REPL is ready
-    vscode.window.onDidOpenTerminal((t) => {
+    this.onOpenDisposable = vscode.window.onDidOpenTerminal((t) => {
       if (this.equalsTerminal(t)) {
         this.lock = new AsyncLock();
         this.lock?.acquire('clips', (done) => (this.lockDone = done));
@@ -203,6 +206,13 @@ export default class ClipsRepl {
     );
 
     this.closeEmitter.fire();
+
+    // Dispose event emitters and listeners
+    this.writeEmitter.dispose();
+    this.redirectWriteEmitter?.dispose();
+    this.commandEmitter.dispose();
+    this.closeEmitter.dispose();
+    this.onOpenDisposable?.dispose();
   };
 
   createTerminal(): vscode.Terminal {
