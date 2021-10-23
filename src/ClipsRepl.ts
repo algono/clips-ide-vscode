@@ -137,6 +137,7 @@ export default class ClipsRepl {
             );
           }
 
+          this.close();
           return ptyCloseEmitter.fire();
         });
         vscode.commands.executeCommand(
@@ -145,7 +146,7 @@ export default class ClipsRepl {
           true
         );
       },
-      close: this.close,
+      close: () => this.clips?.kill(),
       handleInput: handlerInput.handle,
     };
 
