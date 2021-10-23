@@ -20,7 +20,7 @@ function colorRed(data: string) {
 
 export default class ClipsRepl {
   private clips?: IPty;
-  private started?: boolean;
+  private starting?: boolean;
   private lock?: AsyncLock;
   private terminalHasLock?: boolean;
   private lockDone?: Parameters<
@@ -65,10 +65,12 @@ export default class ClipsRepl {
         // Used to take the first line, where the version is printed
         this.redirectWriteEmitter = versionCheckEmitter;
 
+        this.starting = true;
+
         this.clips = nodepty.spawn('clips', [], {});
 
         // Idea from: https://github.com/microsoft/node-pty/issues/74#issuecomment-295520624
-        setTimeout(() => (this.started = true), 500);
+        setTimeout(() => (this.starting = false), 500);
 
         this.clips.onData((data) => {
           let sData: string = data.toString();
@@ -126,13 +128,12 @@ export default class ClipsRepl {
           }
         });
         this.clips.onExit(() => {
-          if (!this.started) {
+          if (this.starting) {
             vscode.window.showErrorMessage(
               'Fatal error. Check if CLIPS is installed.'
             );
           }
 
-          this.closePty();
           return ptyCloseEmitter.fire();
         });
         vscode.commands.executeCommand(
@@ -141,7 +142,7 @@ export default class ClipsRepl {
           true
         );
       },
-      close: this.closePty,
+      close: this.close,
       handleInput: handlerInput.handle,
     };
 
@@ -188,14 +189,12 @@ export default class ClipsRepl {
     this.terminal?.sendText('\r', false);
   }
 
-  closePty() {
+  close = () => {
     console.log('CLOSING PTY');
 
     // Make sure that the shell is actually closed
     this.clips?.kill();
     this.lockDone?.();
-
-    this.started = false;
 
     vscode.commands.executeCommand(
       'setContext',
@@ -204,7 +203,7 @@ export default class ClipsRepl {
     );
 
     this.closeEmitter.fire();
-  }
+  };
 
   createTerminal(): vscode.Terminal {
     return (this.terminal = vscode.window.createTerminal(this.terminalOptions));

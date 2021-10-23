@@ -68,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // If multiple CLIPS terminals are open, we should only use the last active one
-  vscode.window.onDidChangeActiveTerminal(updateActiveRepl);
+  const activeD = vscode.window.onDidChangeActiveTerminal(updateActiveRepl);
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
@@ -139,10 +139,10 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(cmdD);
   });
 
-  context.subscriptions.push(termD, mainD, docD, loadD, loadCD);
+  context.subscriptions.push(termD, mainD, docD, loadD, loadCD, activeD);
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-  state.instances.forEach((c) => c.closePty());
+  state.instances.forEach((c) => c.close());
 }
