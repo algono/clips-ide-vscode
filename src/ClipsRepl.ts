@@ -8,6 +8,7 @@ const nodepty: typeof import('node-pty') = getCoreNodeModule('node-pty');
 import { RedirectData } from './logic';
 import HandlerInput from './HandlerInput';
 import VersionChecker from './VersionChecker';
+import * as logger from './Logger';
 
 // If there is a prompt inside the data, we can assume that the command output ended
 export function commandEnded(data: string) {
@@ -77,7 +78,7 @@ export default class ClipsRepl {
         this.clips.onData((data) => {
           let sData: string = data.toString();
 
-          console.log('DATA OUT RAW: ', JSON.stringify(sData));
+          logger.logVerbose('DATA OUT RAW: ', JSON.stringify(sData));
 
           // Input is echoed in output when using node-pty, so it needs to be removed
           // https://github.com/microsoft/node-pty/issues/78
@@ -107,7 +108,7 @@ export default class ClipsRepl {
             };
           }
 
-          console.log('DATA OUT: ', JSON.stringify(sData));
+          logger.logVerbose('DATA OUT: ', JSON.stringify(sData));
 
           const commandHasEnded = commandEnded(sData);
 
@@ -120,7 +121,7 @@ export default class ClipsRepl {
             }
           } else {
             const res = prepare(sData);
-            console.log('RES: ', JSON.stringify(res));
+            logger.log('RES: ', JSON.stringify(res));
 
             this.writeEmitter.fire(res);
 
@@ -194,7 +195,7 @@ export default class ClipsRepl {
   }
 
   close = () => {
-    console.log('CLOSING PTY');
+    logger.log('CLOSING PTY');
 
     // Make sure that the shell is actually closed
     this.clips?.kill();

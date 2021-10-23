@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import ClipsRepl, { commandEnded } from './ClipsRepl';
 import { RedirectData } from './logic';
+import * as logger from './Logger';
 
 const docNames = ['facts', 'agenda'] as const;
 type DocName = typeof docNames[number];
@@ -52,7 +53,7 @@ class ClipsDoc {
 
     const emitter = new vscode.EventEmitter<RedirectData>();
     emitter.event(([data, prepare]) => {
-      console.log(`DATA OUT (${this.name}): `, JSON.stringify(data));
+      logger.logVerbose(`DATA OUT (${this.name}): `, JSON.stringify(data));
       this.content += data;
       if (commandEnded(data)) {
         this.content = cleanDoc([this.content, prepare]);
@@ -114,7 +115,7 @@ export default class ClipsDocs {
         const contentType = uri.path;
         if (contentType in thisObj.docs) {
           const content = thisObj.docs[contentType as DocName]?.content;
-          console.log('PROVIDING: ', content);
+          logger.logVerbose('PROVIDING: ', content);
           return content ?? '';
         }
         return '';

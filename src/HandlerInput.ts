@@ -1,5 +1,6 @@
 import { EventEmitter } from 'vscode';
 import ClipsRepl from './ClipsRepl';
+import * as logger from './Logger';
 
 export default class HandlerInput {
   private line = '';
@@ -12,8 +13,8 @@ export default class HandlerInput {
   ) {}
 
   handle = (data: string): void => {
-    console.log('LINE:', JSON.stringify(this.line));
-    console.log('DATA IN:', JSON.stringify(data));
+    logger.logVerbose('LINE:', JSON.stringify(this.line));
+    logger.logVerbose('DATA IN:', JSON.stringify(data));
     switch (data) {
       case '\r':
         this.writeEmitter.fire('\r\n');

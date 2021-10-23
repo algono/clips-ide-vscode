@@ -1,5 +1,6 @@
 import { Event, EventEmitter } from 'vscode';
 import { RedirectData } from './logic';
+import * as logger from './Logger';
 
 export namespace VersionChecker {
   function check(
@@ -15,12 +16,12 @@ export namespace VersionChecker {
       const version = /\((.*?)0*\s/.exec(data)?.[1];
       const minVersion = '6.4';
 
-      console.log('VERSION: ', JSON.stringify(version));
+      logger.log('VERSION: ', JSON.stringify(version));
 
       // If the CLIPS version is >= 6.40, assume that SIGINT works
       const sigintWorks = version !== undefined && version >= minVersion;
 
-      console.log('SIGINT WORKS: ', sigintWorks);
+      logger.log('SIGINT WORKS: ', sigintWorks);
 
       sigintEmitter.fire(sigintWorks);
 
