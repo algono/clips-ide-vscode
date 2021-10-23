@@ -8,6 +8,7 @@ type DocName = typeof docNames[number];
 class ClipsDoc {
   content: string = '';
   private doc?: vscode.TextDocument;
+  private needsUpdate: boolean = true;
 
   constructor(
     private name: DocName,
@@ -27,13 +28,17 @@ class ClipsDoc {
 
   updateDoc = () => {
     if (!this.isVisible()) {
+      this.needsUpdate = true;
       return;
     }
 
     const repl = this.getRepl();
     if (!repl) {
+      this.needsUpdate = true;
       return;
     }
+
+    this.needsUpdate = false;
 
     // Removes last two lines (Summary and prompt)
     const cleanDoc = ([data, prepare]: RedirectData): string => {
@@ -71,7 +76,9 @@ class ClipsDoc {
     if (!this.doc) {
       return;
     }
-    return await vscode.window.showTextDocument(this.doc, options);
+    const editor = await vscode.window.showTextDocument(this.doc, options);
+    this.needsUpdate && this.updateDoc();
+    return editor;
   }
 }
 
@@ -137,8 +144,6 @@ export default class ClipsDocs {
     if (editor) {
       this.openEditors.push(editor);
     }
-
-    doc.updateDoc();
   }
 
   async open() {
