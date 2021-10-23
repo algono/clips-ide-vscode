@@ -84,13 +84,13 @@
 			},
 			{
 				"command": "clips-ide.open-doc-facts",
-				"category": "CLIPS Window",
+				"category": "CLIPS View",
 				"title": "Facts",
 				"enablement": "clips-ide.terminalOpen"
 			},
 			{
 				"command": "clips-ide.open-doc-agenda",
-				"category": "CLIPS Window",
+				"category": "CLIPS View",
 				"title": "Agenda",
 				"enablement": "clips-ide.terminalOpen"
 			}
@@ -119,14 +119,31 @@
 			"clips-ide.menu": [
 				{
 					"command": "clips-ide.load-current-file",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips"
+				},
+				{
+					"submenu": "clips-ide.menu-doc",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen"
 				},
 				{
-					"submenu": "clips-ide.menu-run",
+					"submenu": "clips-ide.menu-cmd",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen"
 				}
 			],
-			"clips-ide.menu-run": [
+			"clips-ide.menu-doc": [
+				{
+					"command": "clips-ide.open-doc-facts",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips.view"
+				},
+				{
+					"command": "clips-ide.open-doc-agenda",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips.view"
+				}
+			],
+			"clips-ide.menu-cmd": [
 				{
 					"command": "clips-ide.cmd-run",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
@@ -154,8 +171,12 @@
 				}
 			},
 			{
-				"id": "clips-ide.menu-run",
-				"label": "Run options"
+				"id": "clips-ide.menu-doc",
+				"label": "Views"
+			},
+			{
+				"id": "clips-ide.menu-cmd",
+				"label": "Commands"
 			}
 		],
 		"terminal": {
