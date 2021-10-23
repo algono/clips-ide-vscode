@@ -120,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       files?.forEach((file) => {
-        state.clips?.sendCommand(`load ${file.fsPath}`);
+        state.clips?.sendCommand(`load "${file.fsPath}"`);
       });
     }
   );
@@ -141,7 +141,7 @@ export function activate(context: vscode.ExtensionContext) {
         );
         return;
       }
-      state.clips?.sendCommand(`load ${filePath}`);
+      state.clips?.sendCommand(`load "${filePath}"`);
     }
   );
 
