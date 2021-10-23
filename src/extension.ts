@@ -26,8 +26,15 @@ function createRepl() {
       state.clips = undefined;
     }
 
-    // If the REPL being closed is the last one, close the docs
-    state.instances.length === 0 && state.docs?.close();
+    // If the REPL being closed is the last one, close the docs and update the context
+    if (state.instances.length === 0) {
+      state.docs?.close();
+      vscode.commands.executeCommand(
+        'setContext',
+        'clips-ide.terminalOpen',
+        false
+      );
+    }
   });
 
   return clips;

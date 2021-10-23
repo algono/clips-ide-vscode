@@ -199,12 +199,6 @@ export default class ClipsRepl {
     this.clips?.kill();
     this.lockDone?.();
 
-    vscode.commands.executeCommand(
-      'setContext',
-      'clips-ide.terminalOpen',
-      false
-    );
-
     this.closeEmitter.fire();
 
     // Dispose event emitters and listeners
