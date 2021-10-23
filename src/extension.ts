@@ -18,11 +18,11 @@ function createRepl() {
 
   clips.onCommand(() => clips === state.clips && state.docs?.updateDocs());
   clips.onClose(() => {
-    // If the REPL being closed is the active one, close the docs
-    clips === state.clips && state.docs?.close();
-    
     // Remove REPL from instances list if it is being closed
-    state.instances = state.instances.filter((i) => i !== state.clips);
+    state.instances = state.instances.filter((i) => i !== clips);
+
+    // If the REPL being closed is the last one, close the docs
+    state.instances.length === 0 && state.docs?.close();
   });
 
   return clips;
