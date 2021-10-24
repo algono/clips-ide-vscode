@@ -76,13 +76,13 @@ export default class HandlerInput {
         }
         return;
       case '\u0003': // SIGINT (Ctrl+C)
-      case '\u0015': // (Ctrl+U) (used in terminals to delete this.line)
+      case '\u0015': // (Ctrl+U) (used in terminals to delete line)
         if (this.pos === 0) {
           return;
         }
-        // Move to the left 'this.pos' times (aka to the initial this.position)
+        // Move to the left 'pos' times (aka to the initial position)
         this.writeEmitter.fire(`\x1b[${this.pos}D`);
-        // Delete from cursor to the end of the this.line
+        // Delete from cursor to the end of the line
         this.writeEmitter.fire('\x1b[K');
 
         this.line = '';
@@ -108,13 +108,13 @@ export default class HandlerInput {
 
         return;
       default:
-        // Support for typing characters at any this.position other than the end
+        // Support for typing characters at any position other than the end
         if (this.pos < this.line.length) {
           const before = this.line.slice(0, this.pos),
             after = this.line.slice(this.pos);
           this.writeEmitter.fire(data + after);
           this.line = before + data + after;
-          // Move cursor back to the original this.position
+          // Move cursor back to the original position
           this.writeEmitter.fire(`\x1b[${after.length}D`);
         } else {
           this.writeEmitter.fire(data);
