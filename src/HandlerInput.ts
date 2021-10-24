@@ -1,6 +1,7 @@
 import { EventEmitter } from 'vscode';
 import ClipsRepl from './ClipsRepl';
 import * as logger from './Logger';
+import { prompt } from './logic';
 
 export default class HandlerInput {
   private line = '';
@@ -84,7 +85,7 @@ export default class HandlerInput {
         this.writeEmitter.fire('\x1b[2J\x1b[f');
 
         // Rewrite the prompt and current line
-        this.writeEmitter.fire(`CLIPS> ${this.line}`);
+        this.writeEmitter.fire(`${prompt} ${this.line}`);
 
         // Move the cursor back to the original position (if needed)
         const posDiff = this.line.length - this.pos;

@@ -5,15 +5,10 @@ import { getCoreNodeModule } from './util';
 import { IPty } from 'node-pty';
 const nodepty: typeof import('node-pty') = getCoreNodeModule('node-pty');
 
-import { RedirectData } from './logic';
+import { RedirectData, commandEnded } from './logic';
 import HandlerInput from './HandlerInput';
 import VersionChecker from './VersionChecker';
 import * as logger from './Logger';
-
-// If there is a prompt inside the data, we can assume that the command output ended
-export function commandEnded(data: string) {
-  return data.includes('CLIPS>');
-}
 
 function colorRed(data: string) {
   return '\x1b[31m' + data + '\x1b[0m';

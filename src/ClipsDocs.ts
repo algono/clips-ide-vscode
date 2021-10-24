@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import ClipsRepl, { commandEnded } from './ClipsRepl';
-import { RedirectData } from './logic';
+import ClipsRepl from './ClipsRepl';
+import { RedirectData, commandEnded, prompt } from './logic';
 import * as logger from './Logger';
 
 const docNames = ['facts', 'agenda'] as const;
@@ -43,7 +43,7 @@ class ClipsDoc {
 
     // Removes last two lines (Summary and prompt)
     const cleanDoc = ([data, prepare]: RedirectData): string => {
-      if (data.startsWith('CLIPS>')) {
+      if (data.startsWith(prompt)) {
         return '';
       } else {
         const summaryIndex = data.lastIndexOf('For a total of');
