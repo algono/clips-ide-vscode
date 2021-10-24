@@ -79,6 +79,20 @@ export default class HandlerInput {
           this.writeCommand(data, true);
         }
         return;
+      case '\f': // Clear screen (Ctrl+L)
+        // Clear the screen and move the cursor to the upper left
+        this.writeEmitter.fire('\x1b[2J\x1b[f');
+
+        // Rewrite the prompt and current line
+        this.writeEmitter.fire(`CLIPS> ${this.line}`);
+
+        // Move the cursor back to the original position (if needed)
+        const posDiff = this.line.length - this.pos;
+        if (posDiff > 0) {
+          this.writeEmitter.fire(`\x1b[${posDiff}D`);
+        }
+
+        return;
       default:
         // Support for typing characters at any this.position other than the end
         if (this.pos < this.line.length) {
