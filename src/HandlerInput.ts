@@ -8,10 +8,20 @@ export default class HandlerInput {
   private pos = 0;
   sigintWorks = false;
 
+  private history: string[] = [];
+  private historyPos = 0;
+  private tempLine?: string;
+
   constructor(
     private writeEmitter: EventEmitter<string>,
     private writeCommand: InstanceType<typeof ClipsRepl>['writeCommand']
   ) {}
+
+  addToHistory(line: string) {
+    this.history.push(line);
+    this.historyPos = this.history.length;
+    delete this.tempLine;
+  }
 
   handle = (data: string): void => {
     logger.logVerbose('LINE:', JSON.stringify(this.line));
@@ -20,6 +30,7 @@ export default class HandlerInput {
       case '\r':
         this.writeEmitter.fire('\r\n');
         this.writeCommand(this.line, true);
+        this.addToHistory(this.line);
         this.line = '';
         this.pos = 0;
         return;
@@ -37,9 +48,29 @@ export default class HandlerInput {
         this.writeEmitter.fire('\x1b[P');
         return;
       case '\x1b[A': // up arrow
+        if (this.historyPos > 0) {
+          // If the historyPos is not within bounds of history, save the current line in a variable
+          if (this.historyPos > this.history.length - 1) {
+            this.tempLine = this.line;
+          }
+          this.historyPos--;
+          this.line = this.history[this.historyPos];
+
+          this.updateLine();
+        }
+        return;
       case '\x1b[B': // down arrow
-        // CLIPS does not seem to support command history with up and down arrows
-        // so we just ignore them
+        if (this.historyPos < this.history.length) {
+          this.historyPos++;
+          // If the historyPos is not within bounds of history, restore the temp line
+          if (this.historyPos > this.history.length - 1) {
+            this.line = this.tempLine ?? '';
+          } else {
+            this.line = this.history[this.historyPos];
+          }
+
+          this.updateLine();
+        }
         return;
       case '\x1b[D': // left arrow
         if (this.pos === 0) {
@@ -77,13 +108,7 @@ export default class HandlerInput {
         return;
       case '\u0003': // SIGINT (Ctrl+C)
       case '\u0015': // (Ctrl+U) (used in terminals to delete line)
-        if (this.pos === 0) {
-          return;
-        }
-        // Move to the left 'pos' times (aka to the initial position)
-        this.writeEmitter.fire(`\x1b[${this.pos}D`);
-        // Delete from cursor to the end of the line
-        this.writeEmitter.fire('\x1b[K');
+        this.deleteLine();
 
         this.line = '';
         this.pos = 0;
@@ -126,4 +151,21 @@ export default class HandlerInput {
 
     this.writeEmitter.fire(data);
   };
+
+  private updateLine() {
+    if (this.pos > 0) {
+      this.deleteLine();
+    }
+    this.writeEmitter.fire(this.line);
+    this.pos = this.line.length;
+  }
+
+  private deleteLine() {
+    if (this.pos > 0) {
+      // Move to the left 'pos' times (aka to the initial position)
+      this.writeEmitter.fire(`\x1b[${this.pos}D`);
+    }
+    // Delete from cursor to the end of the line
+    this.writeEmitter.fire('\x1b[K');
+  }
 }
