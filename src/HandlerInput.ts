@@ -62,6 +62,19 @@ export default class HandlerInput {
         // Delete character
         this.writeEmitter.fire('\x1b[P');
         return;
+      case '\x1b[H': // home key
+        if (this.pos > 0) {
+          this.writeEmitter.fire(`\x1b[${this.pos}D`);
+          this.pos = 0;
+        }
+        return;
+      case '\x1b[F': // end key
+        const posDiffEnd = this.line.length - this.pos;
+        if (posDiffEnd > 0) {
+          this.writeEmitter.fire(`\x1b[${posDiffEnd}C`);
+          this.pos = this.line.length;
+        }
+        return;
       case '\u0003': // SIGINT (Ctrl+C)
       case '\u0015': // (Ctrl+U) (used in terminals to delete this.line)
         if (this.pos === 0) {
