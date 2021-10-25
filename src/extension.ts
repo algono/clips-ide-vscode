@@ -161,6 +161,13 @@ export function activate(context: vscode.ExtensionContext) {
 
   const docsD = docs.registerOpenCommands();
 
+  const exitD = vscode.commands.registerCommand(
+    'clips-ide.exit',
+    async () => {
+      return state.clips?.close();
+    }
+  );
+
   context.subscriptions.push(
     termD,
     mainD,
@@ -170,7 +177,8 @@ export function activate(context: vscode.ExtensionContext) {
     activeD,
     docs,
     termCD,
-    ...docsD
+    ...docsD,
+    exitD
   );
 }
 

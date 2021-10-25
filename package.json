@@ -54,6 +54,12 @@
 				"title": "Open Terminal"
 			},
 			{
+				"command": "clips-ide.exit",
+				"category": "CLIPS",
+				"title": "Exit",
+				"enablement": "clips-ide.terminalOpen"
+			},
+			{
 				"command": "clips-ide.load-file",
 				"category": "CLIPS",
 				"title": "Load File...",
@@ -127,15 +133,22 @@
 				{
 					"command": "clips-ide.load-current-file",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
-					"group": "clips"
+					"group": "1_load"
 				},
 				{
 					"submenu": "clips-ide.menu-doc",
-					"when": "resourceLangId == clips && clips-ide.terminalOpen"
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "2_menus"
 				},
 				{
 					"submenu": "clips-ide.menu-cmd",
-					"when": "resourceLangId == clips && clips-ide.terminalOpen"
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "2_menus"
+				},
+				{
+					"command": "clips-ide.exit",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "3_exit"
 				}
 			],
 			"clips-ide.menu-doc": [

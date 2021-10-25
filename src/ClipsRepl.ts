@@ -36,6 +36,8 @@ export default class ClipsRepl {
 
   private onOpenDisposable?: vscode.Disposable;
 
+  private closed = false;
+
   constructor() {
     this.writeEmitter = new vscode.EventEmitter<string>();
 
@@ -133,7 +135,9 @@ export default class ClipsRepl {
             );
           }
 
-          this.close();
+          if (!this.closed) {
+            this.close();
+          }
           return ptyCloseEmitter.fire();
         });
         vscode.commands.executeCommand(
@@ -191,6 +195,8 @@ export default class ClipsRepl {
 
   close = () => {
     logger.log('CLOSING PTY');
+
+    this.closed = true;
 
     // Make sure that the shell is actually closed
     this.clips?.kill();
