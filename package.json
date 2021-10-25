@@ -209,7 +209,7 @@
 						"verbose"
 					],
 					"default": "off",
-					"markdownDescription": "Specifies the level of logging it outputs.\n\n*This slows down performance of the CLIPS terminal when it outputs longer text, so it should only be used for **testing/debugging purposes**.*"
+					"description": "Specifies the level of logging it outputs."
 				},
 				"clips.defaultEnvironmentViews": {
 					"type": "object",
