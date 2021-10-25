@@ -1,7 +1,8 @@
 {
 	"name": "clips-ide",
 	"displayName": "CLIPS",
-	"description": "Provides a similar experience to the CLIPS IDE inside VSCode",
+	"description": "Provides an IDE-like experience for the CLIPS programming language inside VSCode",
+	"icon": "media/clipslogo.png",
 	"version": "1.0.0",
 	"publisher": "algono",
 	"homepage": "https://github.com/algono/clips-ide-vscode",
