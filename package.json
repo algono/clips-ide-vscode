@@ -2,13 +2,27 @@
 	"name": "clips-ide",
 	"displayName": "CLIPS",
 	"description": "Provides a similar experience to the CLIPS IDE inside VSCode",
-	"version": "0.0.1",
+	"version": "1.0.0",
+	"publisher": "algono",
+	"homepage": "https://github.com/algono/clips-ide-vscode",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/algono/clips-ide-vscode.git"
+	},
 	"private": "true",
 	"engines": {
 		"vscode": "^1.61.0"
 	},
 	"categories": [
+		"Programming Languages",
+		"Visualization",
 		"Other"
+	],
+	"keywords": [
+		"clipsrules",
+		"terminal",
+		"IDE",
+		"REPL"
 	],
 	"activationEvents": [
 		"onTerminalProfile:clips-ide.clips-terminal",
