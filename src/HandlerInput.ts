@@ -11,6 +11,7 @@ export default class HandlerInput {
   private history: string[] = [];
   private historyPos = 0;
   private tempLine?: string;
+  private tempHistory: { [k: number]: string } = {};
 
   constructor(
     private writeEmitter: EventEmitter<string>,
@@ -19,8 +20,16 @@ export default class HandlerInput {
 
   addToHistory(line: string) {
     this.history.push(line);
+    delete this.tempHistory[this.historyPos];
     this.historyPos = this.history.length;
     delete this.tempLine;
+  }
+
+  getFromHistory(pos: number) {
+    if (pos in this.tempHistory) {
+      return this.tempHistory[pos];
+    }
+    return this.history[pos];
   }
 
   handle = (data: string): void => {
@@ -52,21 +61,27 @@ export default class HandlerInput {
           // If the historyPos is not within bounds of history, save the current line in a variable
           if (this.historyPos > this.history.length - 1) {
             this.tempLine = this.line;
+          } else if (this.line !== this.history[this.historyPos]) {
+            // If the history entry was modified, save it in a special temp history object
+            this.tempHistory[this.historyPos] = this.line;
           }
-          this.historyPos--;
-          this.line = this.history[this.historyPos];
+          this.line = this.getFromHistory(--this.historyPos);
 
           this.updateLine();
         }
         return;
       case '\x1b[B': // down arrow
         if (this.historyPos < this.history.length) {
+          // If the history entry was modified, save it in a special temp history object
+          if (this.line !== this.history[this.historyPos]) {
+            this.tempHistory[this.historyPos] = this.line;
+          }
           this.historyPos++;
           // If the historyPos is not within bounds of history, restore the temp line
           if (this.historyPos > this.history.length - 1) {
             this.line = this.tempLine ?? '';
           } else {
-            this.line = this.history[this.historyPos];
+            this.line = this.getFromHistory(this.historyPos);
           }
 
           this.updateLine();
