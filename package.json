@@ -20,7 +20,8 @@
 		"onCommand:clips-ide.cmd-clear",
 		"onCommand:clips-ide.cmd-run",
 		"onCommand:clips-ide.open-doc-facts",
-		"onCommand:clips-ide.open-doc-agenda"
+		"onCommand:clips-ide.open-doc-agenda",
+		"onCommand:clips-ide.open-doc-instances"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -93,6 +94,12 @@
 				"category": "CLIPS View",
 				"title": "Agenda",
 				"enablement": "clips-ide.terminalOpen"
+			},
+			{
+				"command": "clips-ide.open-doc-instances",
+				"category": "CLIPS View",
+				"title": "Instances",
+				"enablement": "clips-ide.terminalOpen"
 			}
 		],
 		"menus": {
@@ -139,6 +146,11 @@
 				},
 				{
 					"command": "clips-ide.open-doc-agenda",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips.view"
+				},
+				{
+					"command": "clips-ide.open-doc-instances",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
 					"group": "clips.view"
 				}

@@ -3,7 +3,7 @@ import ClipsRepl from './ClipsRepl';
 import { RedirectData, commandEnded, prompt } from './logic';
 import * as logger from './Logger';
 
-const docNames = ['facts', 'agenda'] as const;
+const docNames = ['facts', 'agenda', 'instances'] as const;
 type DocName = typeof docNames[number];
 
 class ClipsDoc {
