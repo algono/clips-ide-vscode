@@ -13,15 +13,7 @@
 	"activationEvents": [
 		"onTerminalProfile:clips-ide.clips-terminal",
 		"onCommand:clips-ide.open-clips-env",
-		"onCommand:clips-ide.open-terminal",
-		"onCommand:clips-ide.load-file",
-		"onCommand:clips-ide.load-current-file",
-		"onCommand:clips-ide.cmd-reset",
-		"onCommand:clips-ide.cmd-clear",
-		"onCommand:clips-ide.cmd-run",
-		"onCommand:clips-ide.open-doc-facts",
-		"onCommand:clips-ide.open-doc-agenda",
-		"onCommand:clips-ide.open-doc-instances"
+		"onCommand:clips-ide.open-terminal"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
