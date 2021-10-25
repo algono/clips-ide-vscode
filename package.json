@@ -210,6 +210,27 @@
 					],
 					"default": "off",
 					"markdownDescription": "Specifies the level of logging it outputs.\n\n*This slows down performance of the CLIPS terminal when it outputs longer text, so it should only be used for **testing/debugging purposes**.*"
+				},
+				"clips.defaultEnvironmentViews": {
+					"type": "object",
+					"description": "Select which views should be opened whenever the 'Open CLIPS Environment' command is used.",
+					"properties": {
+						"facts": {
+							"type": "boolean"
+						},
+						"agenda": {
+							"type": "boolean"
+						},
+						"instances": {
+							"type": "boolean"
+						}
+					},
+					"additionalProperties": false,
+					"default": {
+						"facts": true,
+						"agenda": true,
+						"instances": false
+					}
 				}
 			}
 		}

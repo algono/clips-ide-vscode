@@ -148,19 +148,34 @@ export default class ClipsDocs {
   }
 
   async open() {
-    await this.openDoc('facts', {
-      preview: false,
-      viewColumn: vscode.ViewColumn.Beside,
-    });
+    const views = vscode.workspace.getConfiguration(
+      'clips.defaultEnvironmentViews'
+    );
 
-    // Split the previous and next document horizontally
-    await vscode.commands.executeCommand('workbench.action.newGroupBelow');
-
-    await this.openDoc('agenda');
+    let shown = 0;
+    for (const name of docNames) {
+      const show = views.get<boolean>(name);
+      if (show) {
+        if (shown === 0) {
+          await this.openDoc(name, {
+            preview: false,
+            viewColumn: vscode.ViewColumn.Beside,
+          });
+        } else {
+          // Split the previous and next document horizontally
+          await vscode.commands.executeCommand(
+            'workbench.action.newGroupBelow'
+          );
+          await this.openDoc(name);
+        }
+        shown++;
+      }
+    }
 
     // Give focus to the original group by focusing the previous one once for each editor the extension creates
-    vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
-    vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
+    for (let i = 0; i < shown; i++) {
+      vscode.commands.executeCommand('workbench.action.focusPreviousGroup');
+    }
   }
 
   close() {
