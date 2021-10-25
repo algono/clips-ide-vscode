@@ -4,7 +4,7 @@ The **CLIPS IDE** extension provides an IDE-like experience for the [**CLIPS**](
 
 ## Features
 
-[Screenshot](media/vscode-clips-ide.png)
+![Screenshot](media/vscode-clips-ide.png)
 
 ### Terminal
 
