@@ -5,6 +5,7 @@
 	"icon": "media/clipslogo.png",
 	"version": "1.0.0",
 	"publisher": "algono",
+	"license": "MIT",
 	"homepage": "https://github.com/algono/clips-ide-vscode",
 	"repository": {
 		"type": "git",
