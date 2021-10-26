@@ -2,13 +2,15 @@
 
 The **CLIPS IDE** extension provides an IDE-like experience for the [**CLIPS**](http://www.clipsrules.net/) programming language inside Visual Studio Code.
 
+![Screenshot](media/vscode-clips-ide.png)
+
 ## Features
 
-![Screenshot](media/vscode-clips-ide.png)
+![Screenshot](media/clips-open-env.gif)
 
 ### Terminal
 
-Improved terminal experience over the *CLIPS REPL* by including several features:
+Improved terminal experience over the _CLIPS REPL_ by including several features:
 
 - Command Editing (moving, removing characters, etc.)
 - Command History (`up/down arrow keys`)
