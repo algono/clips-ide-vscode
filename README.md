@@ -6,7 +6,7 @@ The **CLIPS IDE** extension provides an IDE-like experience for the [**CLIPS**](
 
 ## Features
 
-![Screenshot](media/clips-open-env.gif)
+![Open Animation](media/clips-open-env.gif)
 
 ### Terminal
 
@@ -16,7 +16,7 @@ Improved terminal experience over the _CLIPS REPL_ by including several features
 - Command History (`up/down arrow keys`)
 - Clear Line (`Ctrl+U`) and Clear Screen (`Ctrl+L`)
 
-![Screenshot](media/clips-terminal.gif)
+![Terminal Animation](media/clips-terminal.gif)
 
 ### Views
 
@@ -25,6 +25,8 @@ Improved terminal experience over the _CLIPS REPL_ by including several features
 - Instances
 
 These views update their state automatically after each command.
+
+![Views Animation](media/clips-views.gif)
 
 ## Extension Settings
 
