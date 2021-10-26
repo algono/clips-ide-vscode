@@ -35,6 +35,8 @@ This extension contributes the following settings:
 - `clips.defaultEnvironmentViews`: Selection of which views should be opened whenever the `Open CLIPS Environment` command is used (the `facts` and `agenda` views are enabled by default).
 - `clips.logLevel`: Sets the log level for the extension (`off` by default). Only useful for _testing/debugging_ purposes.
 
+![Settings Animation](media/clips-settings.gif)
+
 ## Release Notes
 
 ### 1.0.0
