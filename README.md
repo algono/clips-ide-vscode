@@ -16,6 +16,8 @@ Improved terminal experience over the _CLIPS REPL_ by including several features
 - Command History (`up/down arrow keys`)
 - Clear Line (`Ctrl+U`) and Clear Screen (`Ctrl+L`)
 
+![Screenshot](media/clips-terminal.gif)
+
 ### Views
 
 - Facts
