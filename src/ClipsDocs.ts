@@ -6,6 +6,8 @@ import * as logger from './Logger';
 const docNames = ['facts', 'agenda', 'instances'] as const;
 type DocName = typeof docNames[number];
 
+const uriScheme = 'clips';
+
 class ClipsDoc {
   content: string = '';
   private doc?: vscode.TextDocument;
@@ -19,7 +21,7 @@ class ClipsDoc {
 
   clear = () => (this.content = '');
 
-  getUriString = () => `clips:${this.name}`;
+  getUriString = () => `${uriScheme}:${this.name}`;
   getUri = () => vscode.Uri.parse(this.getUriString());
 
   isVisible = () =>
@@ -86,12 +88,10 @@ class ClipsDoc {
 export default class ClipsDocs {
   private docs: { [k in DocName]?: ClipsDoc };
   myProvider;
-  private openEditors: vscode.TextEditor[];
 
   constructor(private repl?: ClipsRepl) {
     this.myProvider = this.createProvider();
     this.docs = {};
-    this.openEditors = [];
   }
 
   createDoc = (name: DocName) => {
@@ -140,11 +140,7 @@ export default class ClipsDocs {
 
     await doc.open();
 
-    const editor = await doc.show(options);
-
-    if (editor) {
-      this.openEditors.push(editor);
-    }
+    return await doc.show(options);
   }
 
   async open() {
@@ -181,22 +177,50 @@ export default class ClipsDocs {
   close() {
     // The 'hide' method is deprecated, but it seems to be the only reasonable working solution (currently)
     // reference: https://github.com/microsoft/vscode/issues/21617#issuecomment-283365406
-    this.openEditors?.every((e) => {
-      if (e.hide) {
-        e.hide();
-        return true;
+
+    if (vscode.window.visibleTextEditors.length > 0) {
+      const firstEditor = vscode.window.visibleTextEditors[0];
+
+      if (firstEditor.hide === undefined) {
+        // Error message in case the method ever gets removed
+        vscode.window.showErrorMessage(
+          'The window hiding functionality seems to be missing. This probably has to do with a VSCode update. Please report the issue to the developer.'
+        );
+      } else {
+        const closeClipsEditor = (e: vscode.TextEditor[]) => {
+          return e.some((e) => {
+            // If one of our CLIPS editors is visible, close it
+            if (e.document.uri.scheme === uriScheme) {
+              e.hide();
+              return true;
+            }
+            return false;
+          });
+        };
+
+        const anEditorWasClosed = closeClipsEditor(
+          vscode.window.visibleTextEditors
+        );
+
+        // This allows for CLIPS editors to be closed if they are not visible at first
+        // but they are after another editor was closed
+        // Sadly, if no CLIPS editors are visible, none will be closed.
+        // This seems to be a VSCode limitation, which might be solved in the future
+        // reference: https://github.com/microsoft/vscode/issues/15178
+
+        if (anEditorWasClosed) {
+          const closeD = vscode.window.onDidChangeVisibleTextEditors((e) => {
+            if (!closeClipsEditor(e)) {
+              closeD.dispose();
+            }
+          });
+        }
       }
-      // Added an error message in case the method ever gets removed
-      vscode.window.showErrorMessage(
-        'The window hiding functionality seems to be missing. This probably has to do with a VSCode update. Please report the issue to the developer.'
-      );
-      return false;
-    });
+    }
 
     for (const docName in this.docs) {
       this.docs[docName as DocName]?.clear();
     }
-    this.openEditors = [];
   }
 
   dispose() {
