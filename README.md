@@ -39,6 +39,12 @@ This extension contributes the following settings:
 
 ## Release Notes
 
+### 1.0.1
+
+Improved the system that makes views close when CLIPS is closed.
+
+(It is not perfect due to VSCode limitations, but it now works in more cases than before.)
+
 ### 1.0.0
 
 Initial release of CLIPS IDE.

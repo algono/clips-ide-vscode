@@ -1,9 +1,9 @@
 # Change Log
+## [1.0.1] - 27-10-2021
 
-All notable changes to the "clips-ide" extension will be documented in this file.
+- Improved the system that makes views close when CLIPS is closed.
+  - It is not perfect due to VSCode limitations, but it now works in more cases than before.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
-## [Unreleased]
+## [1.0.0] - 26-10-2021
 
 - Initial release
