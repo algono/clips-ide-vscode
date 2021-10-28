@@ -39,6 +39,10 @@ This extension contributes the following settings:
 
 ## Release Notes
 
+### 1.0.2
+
+Fixed - Views not updating when they were hidden in a tab and then selected.
+
 ### 1.0.1
 
 Improved the system that makes views close when CLIPS is closed.

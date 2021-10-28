@@ -1,4 +1,9 @@
 # Change Log
+
+## [1.0.2] - 28-10-2021
+
+- Fixed - Views not updating when they were hidden in a tab and then selected.
+
 ## [1.0.1] - 27-10-2021
 
 - Improved the system that makes views close when CLIPS is closed.
