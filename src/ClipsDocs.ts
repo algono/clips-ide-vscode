@@ -29,7 +29,11 @@ class ClipsDoc {
       (e) => e.document.uri.toString() === this.getUriString()
     );
 
-  updateDoc = () => {
+  update = (onlyIfNeeded: boolean = false) => {
+    if (onlyIfNeeded && !this.needsUpdate) {
+      return;
+    }
+
     if (!this.isVisible()) {
       this.needsUpdate = true;
       return;
@@ -79,19 +83,35 @@ class ClipsDoc {
     if (!this.doc) {
       return;
     }
-    const editor = await vscode.window.showTextDocument(this.doc, options);
-    this.needsUpdate && this.updateDoc();
-    return editor;
+    return await vscode.window.showTextDocument(this.doc, options);
   }
 }
 
 export default class ClipsDocs {
   private docs: { [k in DocName]?: ClipsDoc };
   myProvider;
+  private readonly updateOnVisibleD: vscode.Disposable;
 
   constructor(private repl?: ClipsRepl) {
     this.myProvider = this.createProvider();
     this.docs = {};
+
+    // Each time there's an update in the visible text editors
+    this.updateOnVisibleD = vscode.window.onDidChangeVisibleTextEditors(
+      (editors) => {
+        editors.forEach((editor) => {
+          // if there's a CLIPS editor
+          if (editor.document.uri.scheme === uriScheme) {
+            const name = editor.document.uri.path;
+            // and it is within the created docs
+            if (name in this.docs) {
+              // check if it needs to be updated
+              this.docs[name as DocName]?.update(true);
+            }
+          }
+        });
+      }
+    );
   }
 
   createDoc = (name: DocName) => {
@@ -125,7 +145,7 @@ export default class ClipsDocs {
 
   updateDocs = () => {
     for (const docName in this.docs) {
-      this.docs[docName as DocName]?.updateDoc();
+      this.docs[docName as DocName]?.update();
     }
   };
 
@@ -225,6 +245,7 @@ export default class ClipsDocs {
 
   dispose() {
     this.myProvider.onDidChangeEmitter.dispose();
+    this.updateOnVisibleD.dispose();
   }
 
   registerOpenCommands() {
