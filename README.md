@@ -37,6 +37,11 @@ This extension contributes the following settings:
 
 ![Settings Animation](media/clips-settings.gif)
 
+
+## Known Issues
+
+This extension does not work properly on Windows, which is probably caused by a bug in the *node_pty* library I have not been able to troubleshoot.
+
 ## Release Notes
 
 ### 1.0.2

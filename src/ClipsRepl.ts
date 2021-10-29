@@ -9,9 +9,34 @@ import { RedirectData, commandEnded } from './logic';
 import HandlerInput from './HandlerInput';
 import VersionChecker from './VersionChecker';
 import * as logger from './Logger';
+import { platform } from 'os';
+import { readdirSync } from 'fs';
+import { join } from 'path';
 
 function colorRed(data: string) {
   return '\x1b[31m' + data + '\x1b[0m';
+}
+
+function getClipsPath(): { name: string; dir?: string } {
+  if (platform() === 'win32') {
+    const programFilesPath = process.env.programfiles ?? 'C:\\Program Files';
+    const clipsDirectories = readdirSync(programFilesPath, {
+      withFileTypes: true,
+    }).filter((d) => d.isDirectory() && d.name.includes('CLIPS'));
+
+    if (clipsDirectories.length > 0) {
+      const clipsDir = join(programFilesPath, clipsDirectories[0].name);
+      const clipsPaths = readdirSync(clipsDir, { withFileTypes: true }).filter(
+        (d) => d.isFile() && d.name === 'CLIPSDOS.exe'
+      );
+      if (clipsPaths.length > 0) {
+        return { name: clipsPaths[0].name, dir: clipsDir };
+      }
+    }
+  }
+
+  // If the platform is not windows or the binary was not found, assume that it exists in PATH as 'clips'
+  return { name: 'clips' };
 }
 
 export default class ClipsRepl {
@@ -72,7 +97,10 @@ export default class ClipsRepl {
         };
 
         try {
-          this.clips = nodepty.spawn('clips', [], {});
+          const { name, dir } = getClipsPath();
+          this.clips = nodepty.spawn(name, [], {
+            cwd: dir ? `"${dir}"` : undefined,
+          });
         } catch (ex) {
           console.error('ERROR: ', ex);
           vscode.window.showErrorMessage(
