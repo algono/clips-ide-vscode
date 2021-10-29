@@ -16,7 +16,6 @@ function colorRed(data: string) {
 
 export default class ClipsRepl {
   private clips?: IPty;
-  private starting?: boolean;
   private lock?: AsyncLock;
   private terminalHasLock?: boolean;
   private lockDone?: Parameters<
@@ -65,12 +64,22 @@ export default class ClipsRepl {
         // Used to take the first line, where the version is printed
         this.redirectWriteEmitter = versionCheckEmitter;
 
-        this.starting = true;
+        const exit = () => {
+          if (!this.closed) {
+            this.close();
+          }
+          return ptyCloseEmitter.fire();
+        };
 
-        this.clips = nodepty.spawn('clips', [], {});
-
-        // Idea from: https://github.com/microsoft/node-pty/issues/74#issuecomment-295520624
-        setTimeout(() => (this.starting = false), 500);
+        try {
+          this.clips = nodepty.spawn('clips', [], {});
+        } catch (ex) {
+          console.error('ERROR: ', ex);
+          vscode.window.showErrorMessage(
+            'Fatal error. Check if CLIPS is installed.'
+          );
+          return exit();
+        }
 
         this.clips.onData((data) => {
           let sData: string = data.toString();
@@ -128,18 +137,7 @@ export default class ClipsRepl {
             }
           }
         });
-        this.clips.onExit(() => {
-          if (this.starting) {
-            vscode.window.showErrorMessage(
-              'Fatal error. Check if CLIPS is installed.'
-            );
-          }
-
-          if (!this.closed) {
-            this.close();
-          }
-          return ptyCloseEmitter.fire();
-        });
+        this.clips.onExit(exit);
         vscode.commands.executeCommand(
           'setContext',
           'clips-ide.terminalOpen',
