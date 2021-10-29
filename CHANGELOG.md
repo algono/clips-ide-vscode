@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.0.3] - 29-10-2021
+
+- Fixed - Error message was not being shown when the CLIPS terminal failed to spawn.
+- Found issue - The CLIPS terminal does not spawn on Windows, even if the path is correct.
+
 ## [1.0.2] - 28-10-2021
 
 - Fixed - Views not updating when they were hidden in a tab and then selected.

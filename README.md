@@ -44,6 +44,12 @@ This extension does not work properly on Windows, which is probably caused by a 
 
 ## Release Notes
 
+### 1.0.3
+
+Fixed - Error message was not being shown when the CLIPS terminal failed to spawn.
+
+Found issue - The CLIPS terminal does not spawn on Windows, even if the path is correct.
+
 ### 1.0.2
 
 Fixed - Views not updating when they were hidden in a tab and then selected.
