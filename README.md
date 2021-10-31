@@ -44,6 +44,10 @@ This extension does not work properly on Windows ([#1](https://github.com/algono
 
 ## Release Notes
 
+### 1.0.4
+
+Updated README to add the newly created issue (#1).
+
 ### 1.0.3
 
 Fixed - Error message was not being shown when the CLIPS terminal failed to spawn.
