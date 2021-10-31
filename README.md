@@ -39,7 +39,7 @@ This extension contributes the following settings:
 
 ## Release Notes
 
-### 1.0.5
+### 1.1.0
 
 The extension finally works on Windows :tada:
 

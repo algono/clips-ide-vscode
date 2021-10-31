@@ -1,6 +1,6 @@
 # Change Log
 
-## [1.0.5] - 31-10-2021
+## [1.1.0] - 31-10-2021
 
 - Fixed issue [#1](https://github.com/algono/clips-ide-vscode/issues/1) (Terminal does not work on Windows).
 
