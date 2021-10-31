@@ -3,7 +3,7 @@
 	"displayName": "CLIPS",
 	"description": "Provides an IDE-like experience for the CLIPS programming language inside VSCode",
 	"icon": "media/clipslogo.png",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"publisher": "algono",
 	"license": "MIT",
 	"homepage": "https://github.com/algono/clips-ide-vscode",
