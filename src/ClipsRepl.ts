@@ -132,17 +132,16 @@ export default class ClipsRepl {
           // Windows needs special cleaning for the data
           if (isWindows()) {
             sData = cleanWinPtyCharacters(sData, this.lastCmd === undefined);
-          }
-          else {
+          } else {
             // Input is echoed in output when using node-pty, so it needs to be removed
             // https://github.com/microsoft/node-pty/issues/78
             if (this.lastCmd && sData.startsWith(this.lastCmd)) {
               sData = sData.slice(this.lastCmd.length);
-            }
 
-            // It seems like node-pty adds an extra line break to the output
-            if (sData.startsWith('\r\n')) {
-              sData = sData.slice(2);
+              // It seems like node-pty adds an extra line break to the output after the input
+              if (sData.startsWith('\r\n')) {
+                sData = sData.slice(2);
+              }
             }
           }
 
