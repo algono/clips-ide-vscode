@@ -40,7 +40,7 @@ This extension contributes the following settings:
 
 ## Known Issues
 
-This extension does not work properly on Windows, which is probably caused by a bug in the *node_pty* library I have not been able to troubleshoot.
+This extension does not work properly on Windows ([#1](https://github.com/algono/clips-ide-vscode/issues/1))
 
 ## Release Notes
 
