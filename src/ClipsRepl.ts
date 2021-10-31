@@ -98,9 +98,7 @@ export default class ClipsRepl {
 
         try {
           const { name, dir } = getClipsPath();
-          this.clips = nodepty.spawn(name, [], {
-            cwd: dir ? `"${dir}"` : undefined,
-          });
+          this.clips = nodepty.spawn(dir ? join(dir, name) : name, [], {});
         } catch (ex) {
           console.error('ERROR: ', ex);
           vscode.window.showErrorMessage(
