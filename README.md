@@ -37,16 +37,17 @@ This extension contributes the following settings:
 
 ![Settings Animation](media/clips-settings.gif)
 
-
-## Known Issues
-
-This extension does not work properly on Windows ([#1](https://github.com/algono/clips-ide-vscode/issues/1))
-
 ## Release Notes
+
+### 1.0.5
+
+The extension finally works on Windows :tada:
+
+This means that issue [#1](https://github.com/algono/clips-ide-vscode/issues/1) was fixed.
 
 ### 1.0.4
 
-Updated README to add the newly created issue (#1).
+Updated README to add the newly created issue ([#1](https://github.com/algono/clips-ide-vscode/issues/1)).
 
 ### 1.0.3
 
