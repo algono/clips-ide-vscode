@@ -1,15 +1,14 @@
 import * as vscode from 'vscode';
 import * as AsyncLock from 'async-lock';
 
-import { getCoreNodeModule } from './util';
+import { getCoreNodeModule, isWindows, stripAnsi } from './util';
 import { IPty } from 'node-pty';
 const nodepty: typeof import('node-pty') = getCoreNodeModule('node-pty');
 
-import { RedirectData, commandEnded } from './logic';
+import { RedirectData, commandEnded, prompt } from './logic';
 import HandlerInput from './HandlerInput';
 import VersionChecker from './VersionChecker';
 import * as logger from './Logger';
-import { platform } from 'os';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 
@@ -18,7 +17,7 @@ function colorRed(data: string) {
 }
 
 function getClipsPath(): { name: string; dir?: string } {
-  if (platform() === 'win32') {
+  if (isWindows()) {
     const programFilesPath = process.env.programfiles ?? 'C:\\Program Files';
     const clipsDirectories = readdirSync(programFilesPath, {
       withFileTypes: true,
@@ -37,6 +36,21 @@ function getClipsPath(): { name: string; dir?: string } {
 
   // If the platform is not windows or the binary was not found, assume that it exists in PATH as 'clips'
   return { name: 'clips' };
+}
+
+function cleanWinPtyCharacters(rawData: string, isFirst: boolean): string {
+  // winpty adds the last input to the output
+  // so if it is not the first output, check for the ANSI escape code it uses to separate
+  // (followed by \r\n at the end, and more escape codes could be in between)
+  // (unless the output is empty, where the ending escape code follows)
+  // and remove everything before it
+  let data = isFirst
+    ? rawData
+    : rawData.replace(/[^].*?\u001b\[0K((.*?\r\n)|(\u001b\[\?25h]))/, '');
+
+  // winpty includes ANSI escape codes in the output, remove them
+  // also, the extra space at the end is replaced with an ANSI escape code, so add it back
+  return stripAnsi(data) + ' ';
 }
 
 export default class ClipsRepl {
@@ -98,7 +112,10 @@ export default class ClipsRepl {
 
         try {
           const { name, dir } = getClipsPath();
-          this.clips = nodepty.spawn(dir ? join(dir, name) : name, [], {});
+          this.clips = nodepty.spawn(dir ? join(dir, name) : name, [], {
+            useConpty: false,
+            cols: 5000,
+          });
         } catch (ex) {
           console.error('ERROR: ', ex);
           vscode.window.showErrorMessage(
@@ -112,22 +129,28 @@ export default class ClipsRepl {
 
           logger.logVerbose('DATA OUT RAW: ', JSON.stringify(sData));
 
-          // Input is echoed in output when using node-pty, so it needs to be removed
-          // https://github.com/microsoft/node-pty/issues/78
-          if (this.lastCmd && sData.startsWith(this.lastCmd)) {
-            sData = sData.slice(this.lastCmd.length);
+          // Windows needs special cleaning for the data
+          if (isWindows()) {
+            sData = cleanWinPtyCharacters(sData, this.lastCmd === undefined);
           }
+          else {
+            // Input is echoed in output when using node-pty, so it needs to be removed
+            // https://github.com/microsoft/node-pty/issues/78
+            if (this.lastCmd && sData.startsWith(this.lastCmd)) {
+              sData = sData.slice(this.lastCmd.length);
+            }
 
-          // It seems like node-pty adds an extra line break to the output
-          if (sData.startsWith('\r\n')) {
-            sData = sData.slice(2);
+            // It seems like node-pty adds an extra line break to the output
+            if (sData.startsWith('\r\n')) {
+              sData = sData.slice(2);
+            }
           }
 
           let prepare = (data: string) => data;
 
-          // If the data starts with '\r\n[' we can probably assume that it is an error
+          // If the data starts with '[' (with any number of \r or \n before it) we can probably assume that it is an error
           // (because CLIPS outputs errors with lines starting with error codes like '[ERRORCODE]' and a line break before it)
-          if (sData.startsWith('\r\n[')) {
+          if (/[^][\r\n]*\[/.test(sData)) {
             prepare = (data) => {
               const lineBreakIndex = data.indexOf('\n', 3);
               if (lineBreakIndex >= 0) {

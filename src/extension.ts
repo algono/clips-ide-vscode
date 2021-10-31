@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import ClipsDocs from './ClipsDocs';
 import ClipsRepl from './ClipsRepl';
+import { isWindows } from './util';
 
 const state: {
   clips?: ClipsRepl;
@@ -109,6 +110,13 @@ export function activate(context: vscode.ExtensionContext) {
     openTerminal
   );
 
+  const fixFsPath = (path: string) => {
+    if (isWindows()) {
+      return path.replace(/\\/g, '\\\\');
+    }
+    return path;
+  };
+
   const loadD = vscode.commands.registerCommand(
     'clips-ide.load-file',
     async () => {
@@ -120,7 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       files?.forEach((file) => {
-        state.clips?.sendCommand(`load "${file.fsPath}"`);
+        state.clips?.sendCommand(`load "${fixFsPath(file.fsPath)}"`);
       });
     }
   );
@@ -141,7 +149,7 @@ export function activate(context: vscode.ExtensionContext) {
         );
         return;
       }
-      state.clips?.sendCommand(`load "${filePath}"`);
+      state.clips?.sendCommand(`load "${fixFsPath(filePath)}"`);
     }
   );
 
@@ -161,12 +169,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   const docsD = docs.registerOpenCommands();
 
-  const exitD = vscode.commands.registerCommand(
-    'clips-ide.exit',
-    async () => {
-      return state.clips?.close();
-    }
-  );
+  const exitD = vscode.commands.registerCommand('clips-ide.exit', async () => {
+    return state.clips?.close();
+  });
 
   context.subscriptions.push(
     termD,
