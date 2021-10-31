@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.4] - 31-10-2021
+
+- Updated README to add the newly created issue (#1).
+
 ## [1.0.3] - 29-10-2021
 
 - Fixed - Error message was not being shown when the CLIPS terminal failed to spawn.
