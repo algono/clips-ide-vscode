@@ -98,19 +98,19 @@
 				"enablement": "clips-ide.terminalOpen"
 			},
 			{
-				"command": "clips-ide.open-doc-facts",
+				"command": "clips-ide.open-view-facts",
 				"category": "CLIPS View",
 				"title": "Facts",
 				"enablement": "clips-ide.terminalOpen"
 			},
 			{
-				"command": "clips-ide.open-doc-agenda",
+				"command": "clips-ide.open-view-agenda",
 				"category": "CLIPS View",
 				"title": "Agenda",
 				"enablement": "clips-ide.terminalOpen"
 			},
 			{
-				"command": "clips-ide.open-doc-instances",
+				"command": "clips-ide.open-view-instances",
 				"category": "CLIPS View",
 				"title": "Instances",
 				"enablement": "clips-ide.terminalOpen"
@@ -144,7 +144,7 @@
 					"group": "1_load"
 				},
 				{
-					"submenu": "clips-ide.menu-doc",
+					"submenu": "clips-ide.menu-view",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
 					"group": "2_menus"
 				},
@@ -159,19 +159,19 @@
 					"group": "3_exit"
 				}
 			],
-			"clips-ide.menu-doc": [
+			"clips-ide.menu-view": [
 				{
-					"command": "clips-ide.open-doc-facts",
+					"command": "clips-ide.open-view-facts",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
 					"group": "clips.view"
 				},
 				{
-					"command": "clips-ide.open-doc-agenda",
+					"command": "clips-ide.open-view-agenda",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
 					"group": "clips.view"
 				},
 				{
-					"command": "clips-ide.open-doc-instances",
+					"command": "clips-ide.open-view-instances",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
 					"group": "clips.view"
 				}
@@ -204,7 +204,7 @@
 				}
 			},
 			{
-				"id": "clips-ide.menu-doc",
+				"id": "clips-ide.menu-view",
 				"label": "Views"
 			},
 			{

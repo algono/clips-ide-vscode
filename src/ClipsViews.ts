@@ -3,18 +3,18 @@ import ClipsRepl from './ClipsRepl';
 import { RedirectData, commandEnded, prompt } from './logic';
 import * as logger from './Logger';
 
-const docNames = ['facts', 'agenda', 'instances'] as const;
-type DocName = typeof docNames[number];
+const viewNames = ['facts', 'agenda', 'instances'] as const;
+type ViewName = typeof viewNames[number];
 
 const uriScheme = 'clips';
 
-class ClipsDoc {
+class ClipsView {
   content: string = '';
   private doc?: vscode.TextDocument;
   private needsUpdate: boolean = true;
 
   constructor(
-    private name: DocName,
+    private name: ViewName,
     private onDidChangeEmitter: vscode.EventEmitter<vscode.Uri>,
     private getRepl: () => ClipsRepl | undefined
   ) {}
@@ -48,7 +48,7 @@ class ClipsDoc {
     this.needsUpdate = false;
 
     // Removes last two lines (Summary and prompt)
-    const cleanDoc = ([data, prepare]: RedirectData): string => {
+    const clean = ([data, prepare]: RedirectData): string => {
       if (data.startsWith(prompt)) {
         return '';
       } else {
@@ -62,7 +62,7 @@ class ClipsDoc {
       logger.logVerbose(`DATA OUT (${this.name}): `, JSON.stringify(data));
       this.content += data;
       if (commandEnded(data)) {
-        this.content = cleanDoc([this.content, prepare]);
+        this.content = clean([this.content, prepare]);
 
         this.onDidChangeEmitter.fire(this.getUri());
       }
@@ -87,14 +87,14 @@ class ClipsDoc {
   }
 }
 
-export default class ClipsDocs {
-  private docs: { [k in DocName]?: ClipsDoc };
+export default class ClipsViews {
+  private views: { [k in ViewName]?: ClipsView };
   myProvider;
   private readonly updateOnVisibleD: vscode.Disposable;
 
   constructor(private repl?: ClipsRepl) {
     this.myProvider = this.createProvider();
-    this.docs = {};
+    this.views = {};
 
     // Each time there's an update in the visible text editors
     this.updateOnVisibleD = vscode.window.onDidChangeVisibleTextEditors(
@@ -103,10 +103,10 @@ export default class ClipsDocs {
           // if there's a CLIPS editor
           if (editor.document.uri.scheme === uriScheme) {
             const name = editor.document.uri.path;
-            // and it is within the created docs
-            if (name in this.docs) {
+            // and it is within the created views
+            if (name in this.views) {
               // check if it needs to be updated
-              this.docs[name as DocName]?.update(true);
+              this.views[name as ViewName]?.update(true);
             }
           }
         });
@@ -114,8 +114,8 @@ export default class ClipsDocs {
     );
   }
 
-  createDoc = (name: DocName) => {
-    return (this.docs[name] = new ClipsDoc(
+  createView = (name: ViewName) => {
+    return (this.views[name] = new ClipsView(
       name,
       this.myProvider.onDidChangeEmitter,
       () => this.repl
@@ -133,8 +133,8 @@ export default class ClipsDocs {
       onDidChange = this.onDidChangeEmitter.event;
       provideTextDocumentContent(uri: vscode.Uri): string {
         const contentType = uri.path;
-        if (contentType in thisObj.docs) {
-          const content = thisObj.docs[contentType as DocName]?.content;
+        if (contentType in thisObj.views) {
+          const content = thisObj.views[contentType as ViewName]?.content;
           logger.logVerbose('PROVIDING: ', content);
           return content ?? '';
         }
@@ -144,7 +144,7 @@ export default class ClipsDocs {
   }
 
   private launchUpdateProgress() {
-    const keys = Object.keys(this.docs);
+    const keys = Object.keys(this.views);
 
     if (!keys || keys.length <= 0) {
       return;
@@ -212,26 +212,26 @@ export default class ClipsDocs {
     );
   }
 
-  updateDocs = () => {
+  updateViews = () => {
     this.launchUpdateProgress();
 
-    for (const docName in this.docs) {
-      this.docs[docName as DocName]?.update();
+    for (const viewName in this.views) {
+      this.views[viewName as ViewName]?.update();
     }
   };
 
-  private async openDoc(
-    name: DocName,
+  private async openView(
+    name: ViewName,
     options: vscode.TextDocumentShowOptions = { preview: false }
   ) {
-    let doc = this.docs[name];
-    if (!doc) {
-      doc = this.createDoc(name);
+    let view = this.views[name];
+    if (!view) {
+      view = this.createView(name);
     }
 
-    await doc.open();
+    await view.open();
 
-    return await doc.show(options);
+    return await view.show(options);
   }
 
   async open() {
@@ -240,11 +240,11 @@ export default class ClipsDocs {
     );
 
     let shown = 0;
-    for (const name of docNames) {
+    for (const name of viewNames) {
       const show = views.get<boolean>(name);
       if (show) {
         if (shown === 0) {
-          await this.openDoc(name, {
+          await this.openView(name, {
             preview: false,
             viewColumn: vscode.ViewColumn.Beside,
           });
@@ -253,7 +253,7 @@ export default class ClipsDocs {
           await vscode.commands.executeCommand(
             'workbench.action.newGroupBelow'
           );
-          await this.openDoc(name);
+          await this.openView(name);
         }
         shown++;
       }
@@ -309,8 +309,8 @@ export default class ClipsDocs {
       }
     }
 
-    for (const docName in this.docs) {
-      this.docs[docName as DocName]?.clear();
+    for (const viewName in this.views) {
+      this.views[viewName as ViewName]?.clear();
     }
   }
 
@@ -321,12 +321,12 @@ export default class ClipsDocs {
 
   registerOpenCommands() {
     const disposables: vscode.Disposable[] = [];
-    for (const name of docNames) {
+    for (const name of viewNames) {
       disposables.push(
         vscode.commands.registerCommand(
-          'clips-ide.open-doc-' + name,
+          'clips-ide.open-view-' + name,
           async () => {
-            await this.openDoc(name, {
+            await this.openView(name, {
               preview: false,
               viewColumn: vscode.ViewColumn.Beside,
             });

@@ -1,13 +1,13 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import ClipsDocs from './ClipsDocs';
+import ClipsViews from './ClipsViews';
 import ClipsRepl from './ClipsRepl';
 import { isWindows } from './util';
 
 const state: {
   clips?: ClipsRepl;
-  docs?: ClipsDocs;
+  views?: ClipsViews;
   instances: ClipsRepl[];
 } = { instances: [] };
 
@@ -17,7 +17,7 @@ function createRepl() {
   state.clips = clips;
   state.instances.push(clips);
 
-  clips.onCommand(() => clips === state.clips && state.docs?.updateDocs());
+  clips.onCommand(() => clips === state.clips && state.views?.updateViews());
   clips.onClose(() => {
     // Remove REPL from instances list if it is being closed
     state.instances = state.instances.filter((i) => i !== clips);
@@ -27,9 +27,9 @@ function createRepl() {
       state.clips = undefined;
     }
 
-    // If the REPL being closed is the last one, close the docs and update the context
+    // If the REPL being closed is the last one, close the views and update the context
     if (state.instances.length === 0) {
-      state.docs?.close();
+      state.views?.close();
       vscode.commands.executeCommand(
         'setContext',
         'clips-ide.terminalOpen',
@@ -41,19 +41,19 @@ function createRepl() {
   return clips;
 }
 
-function initDocs() {
-  state.docs = new ClipsDocs(state.clips);
-  return state.docs;
+function initViews() {
+  state.views = new ClipsViews(state.clips);
+  return state.views;
 }
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  const docs = initDocs();
+  const views = initViews();
 
   const docD = vscode.workspace.registerTextDocumentContentProvider(
     'clips',
-    docs.myProvider
+    views.myProvider
   );
 
   const termD = vscode.window.registerTerminalProfileProvider(
@@ -70,9 +70,9 @@ export function activate(context: vscode.ExtensionContext) {
     return state.instances.some((c) => {
       if (c.updateTerminal(t)) {
         state.clips = c;
-        if (state.docs) {
-          state.docs.setRepl(c);
-          state.docs.updateDocs();
+        if (state.views) {
+          state.views.setRepl(c);
+          state.views.updateViews();
         }
         return true;
       }
@@ -100,7 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
   const mainD = vscode.commands.registerCommand(
     'clips-ide.open-clips-env',
     async () => {
-      await state.docs?.open();
+      await state.views?.open();
       openTerminal();
     }
   );
@@ -167,7 +167,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(cmdD);
   });
 
-  const docsD = docs.registerOpenCommands();
+  const viewsD = views.registerOpenCommands();
 
   const exitD = vscode.commands.registerCommand('clips-ide.exit', async () => {
     return state.clips?.close();
@@ -180,9 +180,9 @@ export function activate(context: vscode.ExtensionContext) {
     loadD,
     loadCD,
     activeD,
-    docs,
+    views,
     termCD,
-    ...docsD,
+    ...viewsD,
     exitD
   );
 }
