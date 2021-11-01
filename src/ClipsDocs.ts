@@ -143,7 +143,78 @@ export default class ClipsDocs {
     })();
   }
 
+  private launchUpdateProgress() {
+    const keys = Object.keys(this.docs);
+
+    if (!keys || keys.length <= 0) {
+      return;
+    }
+
+    const state: {
+      updated: number;
+      resolve?: (value: unknown) => void;
+      progress?: Parameters<
+        Parameters<typeof vscode.window.withProgress>[1]
+      >[0];
+      timeout?: NodeJS.Timeout;
+      disposable: vscode.Disposable;
+    } = {
+      updated: 0,
+      disposable: this.myProvider.onDidChange((uri) => {
+        if (uri.scheme === uriScheme) {
+          const index = keys.indexOf(uri.path);
+          if (index >= 0) {
+            state.progress?.report({
+              message:
+                index < keys.length - 1
+                  ? `Updating view (${keys[index + 1]})`
+                  : undefined,
+              increment: 100 / keys.length,
+            });
+            if (++state.updated >= keys.length) {
+              if (state.timeout) {
+                clearTimeout(state.timeout);
+              }
+              if (state.resolve) {
+                state.resolve(null);
+              } else {
+                state.disposable.dispose();
+              }
+            }
+          }
+        }
+      }),
+    };
+
+    state.timeout = setTimeout(
+      () =>
+        vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: 'Updating views',
+          },
+          (progress) => {
+            state.progress = progress;
+            progress.report({
+              message:
+                state.updated >= 0 && state.updated < keys.length
+                  ? `Updating view (${keys[state.updated]})`
+                  : undefined,
+              increment: state.updated * (100 / keys.length),
+            });
+
+            return new Promise((resolve) => {
+              state.resolve = resolve;
+            }).finally(() => state.disposable.dispose());
+          }
+        ),
+      1000
+    );
+  }
+
   updateDocs = () => {
+    this.launchUpdateProgress();
+
     for (const docName in this.docs) {
       this.docs[docName as DocName]?.update();
     }
