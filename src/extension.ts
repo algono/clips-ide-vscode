@@ -176,7 +176,10 @@ export function activate(context: vscode.ExtensionContext) {
     views,
     termCD,
     ...viewsD,
-    exitD
+    exitD,
+    {
+      dispose: () => state.clips?.close(),
+    }
   );
 }
 

@@ -91,6 +91,7 @@ export default class ClipsViews {
   private views: { [k in ViewName]?: ClipsView };
   myProvider;
   private readonly updateOnVisibleD: vscode.Disposable;
+  private progressEnd?: () => void;
 
   constructor(private repl?: ClipsRepl) {
     this.myProvider = this.createProvider();
@@ -150,6 +151,21 @@ export default class ClipsViews {
       return;
     }
 
+    const end = () => {
+      if (state.timeout) {
+        clearTimeout(state.timeout);
+      }
+      if (state.resolve) {
+        state.resolve(null);
+      } else {
+        state.disposable.dispose();
+      }
+
+      delete this.progressEnd;
+    };
+
+    this.progressEnd = end;
+
     const state: {
       updated: number;
       resolve?: (value: unknown) => void;
@@ -172,14 +188,7 @@ export default class ClipsViews {
               increment: 100 / keys.length,
             });
             if (++state.updated >= keys.length) {
-              if (state.timeout) {
-                clearTimeout(state.timeout);
-              }
-              if (state.resolve) {
-                state.resolve(null);
-              } else {
-                state.disposable.dispose();
-              }
+              end();
             }
           }
         }
@@ -312,6 +321,9 @@ export default class ClipsViews {
     for (const viewName in this.views) {
       this.views[viewName as ViewName]?.clear();
     }
+
+    // If there was a progress pending, end it
+    this.progressEnd?.();
   }
 
   dispose() {
