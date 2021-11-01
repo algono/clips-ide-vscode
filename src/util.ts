@@ -21,11 +21,18 @@ export function isWindows() {
   return platform() === 'win32';
 }
 
+export function fixFsPath(path: string) {
+  if (isWindows()) {
+    return path.replace(/\\/g, '\\\\');
+  }
+  return path;
+}
+
 /**
  * These functions come from the following libraries:
- * 
+ *
  * - ansi-regex: https://www.npmjs.com/package/ansi-regex
- * 
+ *
  * - strip-ansi: https://www.npmjs.com/package/strip-ansi
  *
  * Normally I would have just imported them, but for some reason it throws an error when I try to

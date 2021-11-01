@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import ClipsViews from './ClipsViews';
 import ClipsRepl from './ClipsRepl';
-import { isWindows } from './util';
+import { fixFsPath } from './util';
 
 const state: {
   clips?: ClipsRepl;
@@ -109,13 +109,6 @@ export function activate(context: vscode.ExtensionContext) {
     'clips-ide.open-terminal',
     openTerminal
   );
-
-  const fixFsPath = (path: string) => {
-    if (isWindows()) {
-      return path.replace(/\\/g, '\\\\');
-    }
-    return path;
-  };
 
   const loadD = vscode.commands.registerCommand(
     'clips-ide.load-file',
