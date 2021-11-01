@@ -32,7 +32,15 @@ These views update their state automatically after each command.
 
 This extension contributes the following settings:
 
+- `clips.clipsPath`: Specifies a custom path for the CLIPS command-line executable (CLIPSDOS) (empty by default).
+
+  - If empty, the extension tries to auto-detect its path:
+    - In Windows, it looks in the "Program Files" directory for a folder that includes the word "CLIPS", and then for the "CLIPSDOS.exe" file inside it.
+    
+    - If the one above fails, or it's a different OS, it assumes that a command called "clips" exists within the system's PATH env.
+
 - `clips.defaultEnvironmentViews`: Selection of which views should be opened whenever the `Open CLIPS Environment` command is used (the `facts` and `agenda` views are enabled by default).
+
 - `clips.logLevel`: Sets the log level for the extension (`off` by default). Only useful for _testing/debugging_ purposes.
 
 ![Settings Animation](media/clips-settings.gif)
