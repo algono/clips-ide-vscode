@@ -16,7 +16,15 @@ function colorRed(data: string) {
   return '\x1b[31m' + data + '\x1b[0m';
 }
 
-function getClipsPath(): { name: string; dir?: string } {
+function getClipsPath(): string {
+  const customPath = vscode.workspace
+    .getConfiguration('clips')
+    .get<string>('clipsPath');
+
+  if (customPath) {
+    return customPath;
+  }
+
   if (isWindows()) {
     const programFilesPath = process.env.programfiles ?? 'C:\\Program Files';
     const clipsDirectories = readdirSync(programFilesPath, {
@@ -29,13 +37,13 @@ function getClipsPath(): { name: string; dir?: string } {
         (d) => d.isFile() && d.name === 'CLIPSDOS.exe'
       );
       if (clipsPaths.length > 0) {
-        return { name: clipsPaths[0].name, dir: clipsDir };
+        return join(clipsDir, clipsPaths[0].name);
       }
     }
   }
 
   // If the platform is not windows or the binary was not found, assume that it exists in PATH as 'clips'
-  return { name: 'clips' };
+  return 'clips';
 }
 
 function cleanWinPtyCharacters(rawData: string, isFirst: boolean): string {
@@ -111,8 +119,7 @@ export default class ClipsRepl {
         };
 
         try {
-          const { name, dir } = getClipsPath();
-          this.clips = nodepty.spawn(dir ? join(dir, name) : name, [], {
+          this.clips = nodepty.spawn(getClipsPath(), [], {
             useConpty: false,
             cols: 5000,
           });

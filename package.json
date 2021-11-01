@@ -223,14 +223,9 @@
 		"configuration": {
 			"title": "CLIPS",
 			"properties": {
-				"clips.logLevel": {
-					"enum": [
-						"off",
-						"log",
-						"verbose"
-					],
-					"default": "off",
-					"description": "Specifies the level of logging it outputs."
+				"clips.clipsPath": {
+					"type": "string",
+					"description": "Specifies a custom path for the CLIPS command-line executable (CLIPSDOS)."
 				},
 				"clips.defaultEnvironmentViews": {
 					"type": "object",
@@ -252,6 +247,15 @@
 						"agenda": true,
 						"instances": false
 					}
+				},
+				"clips.logLevel": {
+					"enum": [
+						"off",
+						"log",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Specifies the level of logging it outputs."
 				}
 			}
 		}
