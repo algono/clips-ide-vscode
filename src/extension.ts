@@ -174,8 +174,16 @@ export function activate(context: vscode.ExtensionContext) {
   const stratD = vscode.commands.registerCommand(
     'clips-ide.set-strategy',
     async () => {
+      const currentStrategy = state.clips?.getStrategy();
+      const currentStrategyInfo = currentStrategy
+        ? `Current: ${currentStrategy}`
+        : undefined;
+
       const strategy = await vscode.window.showQuickPick(strategies, {
-        title: 'Set the strategy:',
+        title:
+          'Set the strategy' +
+          (currentStrategyInfo ? ` (${currentStrategyInfo})` : undefined),
+        placeHolder: currentStrategyInfo,
       });
 
       if (strategy) {

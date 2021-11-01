@@ -90,6 +90,8 @@ export default class ClipsRepl {
 
   private closed = false;
 
+  private currentStrategy?: string;
+
   constructor() {
     this.writeEmitter = new vscode.EventEmitter<string>();
 
@@ -242,7 +244,11 @@ export default class ClipsRepl {
     });
   }
 
+  getStrategy = () => this.currentStrategy;
+
   setStrategy = (strategy: string) => {
+    this.currentStrategy = strategy;
+
     return this.writeCommand(
       `(set-strategy ${strategy.toLowerCase()})`,
       false,
