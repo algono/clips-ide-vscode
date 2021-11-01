@@ -75,7 +75,7 @@ export default class ClipsRepl {
     Parameters<InstanceType<typeof AsyncLock>['acquire']>[1]
   >[0];
   private writeEmitter: vscode.EventEmitter<string>;
-  redirectWriteEmitter?: vscode.EventEmitter<RedirectData>;
+  redirectWriteEmitter?: vscode.EventEmitter<RedirectData> | null;
 
   private terminal?: vscode.Terminal;
   private lastCmd?: string;
@@ -191,10 +191,10 @@ export default class ClipsRepl {
 
           const commandHasEnded = commandEnded(sData);
 
-          if (this.redirectWriteEmitter) {
-            this.redirectWriteEmitter.fire([sData, prepare]);
+          if (this.redirectWriteEmitter !== undefined) {
+            this.redirectWriteEmitter?.fire([sData, prepare]);
             if (commandHasEnded) {
-              this.redirectWriteEmitter.dispose();
+              this.redirectWriteEmitter?.dispose();
               delete this.redirectWriteEmitter;
               this.lockDone?.();
             }
@@ -216,6 +216,19 @@ export default class ClipsRepl {
           'clips-ide.terminalOpen',
           true
         );
+
+        const defaultStrategy = vscode.workspace
+          .getConfiguration('clips')
+          .get<string>('defaultStrategy');
+        if (defaultStrategy) {
+          this.writeCommand(
+            `(set-strategy ${defaultStrategy.toLowerCase()})`,
+            false,
+            () => {
+              this.redirectWriteEmitter = null;
+            }
+          );
+        }
       },
       close: () => this.clips?.kill(),
       handleInput: handlerInput.handle,

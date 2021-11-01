@@ -248,6 +248,19 @@
 						"instances": false
 					}
 				},
+				"clips.defaultStrategy": {
+					"enum": [
+						"Breadth",
+						"Complexity",
+						"Depth",
+						"LEX",
+						"MEA",
+						"Random",
+						"Simplicity"
+					],
+					"default": "Depth",
+					"description": "Specifies the default strategy used by CLIPS when running. (This value will only be set on startup)."
+				},
 				"clips.logLevel": {
 					"enum": [
 						"off",
