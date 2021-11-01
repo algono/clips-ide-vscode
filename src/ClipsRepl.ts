@@ -9,7 +9,7 @@ import { RedirectData, commandEnded, prompt } from './logic';
 import HandlerInput from './HandlerInput';
 import VersionChecker from './VersionChecker';
 import * as logger from './Logger';
-import { readdirSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 function colorRed(data: string) {
@@ -22,7 +22,11 @@ function getClipsPath(): string {
     .get<string>('clipsPath');
 
   if (customPath) {
-    return customPath;
+    if (existsSync(customPath)) {
+      return customPath;
+    } else {
+      vscode.window.showWarningMessage('The custom path defined in preferences (clips.clipsPath) does not exist. This time it will be ignored.');
+    }
   }
 
   if (isWindows()) {
