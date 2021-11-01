@@ -114,6 +114,12 @@
 				"category": "CLIPS View",
 				"title": "Instances",
 				"enablement": "clips-ide.terminalOpen"
+			},
+			{
+				"command": "clips-ide.set-strategy",
+				"category": "CLIPS Options",
+				"title": "Set Strategy...",
+				"enablement": "clips-ide.terminalOpen"
 			}
 		],
 		"menus": {
@@ -154,9 +160,14 @@
 					"group": "2_menus"
 				},
 				{
+					"command": "clips-ide.set-strategy",
+					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "3_options"
+				},
+				{
 					"command": "clips-ide.exit",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
-					"group": "3_exit"
+					"group": "4_exit"
 				}
 			],
 			"clips-ide.menu-view": [

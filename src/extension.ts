@@ -162,6 +162,28 @@ export function activate(context: vscode.ExtensionContext) {
 
   const viewsD = views.registerOpenCommands();
 
+  const strategies = [
+    'Breadth',
+    'Complexity',
+    'Depth',
+    'LEX',
+    'MEA',
+    'Random',
+    'Simplicity',
+  ];
+  const stratD = vscode.commands.registerCommand(
+    'clips-ide.set-strategy',
+    async () => {
+      const strategy = await vscode.window.showQuickPick(strategies, {
+        title: 'Set the strategy:',
+      });
+
+      if (strategy) {
+        state.clips?.setStrategy(strategy);
+      }
+    }
+  );
+
   const exitD = vscode.commands.registerCommand('clips-ide.exit', async () => {
     return state.clips?.close();
   });
@@ -179,7 +201,8 @@ export function activate(context: vscode.ExtensionContext) {
     exitD,
     {
       dispose: () => state.clips?.close(),
-    }
+    },
+    stratD
   );
 }
 

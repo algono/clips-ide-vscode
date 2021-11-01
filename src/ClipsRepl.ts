@@ -5,7 +5,7 @@ import { getCoreNodeModule, isWindows, stripAnsi } from './util';
 import { IPty } from 'node-pty';
 const nodepty: typeof import('node-pty') = getCoreNodeModule('node-pty');
 
-import { RedirectData, commandEnded, prompt } from './logic';
+import { RedirectData, commandEnded } from './logic';
 import HandlerInput from './HandlerInput';
 import VersionChecker from './VersionChecker';
 import * as logger from './Logger';
@@ -221,13 +221,7 @@ export default class ClipsRepl {
           .getConfiguration('clips')
           .get<string>('defaultStrategy');
         if (defaultStrategy) {
-          this.writeCommand(
-            `(set-strategy ${defaultStrategy.toLowerCase()})`,
-            false,
-            () => {
-              this.redirectWriteEmitter = null;
-            }
-          );
+          this.setStrategy(defaultStrategy);
         }
       },
       close: () => this.clips?.kill(),
@@ -247,6 +241,16 @@ export default class ClipsRepl {
       }
     });
   }
+
+  setStrategy = (strategy: string) => {
+    return this.writeCommand(
+      `(set-strategy ${strategy.toLowerCase()})`,
+      false,
+      () => {
+        this.redirectWriteEmitter = null;
+      }
+    );
+  };
 
   writeCommand = (cmd: string, isTerminal: boolean, before?: () => any) => {
     const write = () => {
