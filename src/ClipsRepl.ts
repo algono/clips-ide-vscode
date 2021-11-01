@@ -25,7 +25,9 @@ function getClipsPath(): string {
     if (existsSync(customPath)) {
       return customPath;
     } else {
-      vscode.window.showWarningMessage('The custom path defined in preferences (clips.clipsPath) does not exist. This time it will be ignored.');
+      vscode.window.showWarningMessage(
+        'The custom path defined in preferences (clips.clipsPath) does not exist. This time it will be ignored.'
+      );
     }
   }
 
@@ -122,17 +124,21 @@ export default class ClipsRepl {
           return ptyCloseEmitter.fire();
         };
 
+        const error = (ex: unknown) => {
+          console.error('ERROR: ', ex);
+          vscode.window.showErrorMessage(
+            'Fatal error. Check if CLIPS is installed.'
+          );
+          return exit();
+        };
+
         try {
           this.clips = nodepty.spawn(getClipsPath(), [], {
             useConpty: false,
             cols: 5000,
           });
         } catch (ex) {
-          console.error('ERROR: ', ex);
-          vscode.window.showErrorMessage(
-            'Fatal error. Check if CLIPS is installed.'
-          );
-          return exit();
+          return error(ex);
         }
 
         this.clips.onData((data) => {
@@ -140,10 +146,18 @@ export default class ClipsRepl {
 
           logger.logVerbose('DATA OUT RAW: ', JSON.stringify(sData));
 
+          const isFirst = this.lastCmd === undefined;
+
           // Windows needs special cleaning for the data
           if (isWindows()) {
-            sData = cleanWinPtyCharacters(sData, this.lastCmd === undefined);
+            sData = cleanWinPtyCharacters(sData, isFirst);
           } else {
+            // In Linux, the error when the executable is not found is not thrown, but outputted.
+            // So it needs to be caught manually
+            if (isFirst && sData.startsWith('execvp(3) failed')) {
+              return error(sData);
+            }
+
             // Input is echoed in output when using node-pty, so it needs to be removed
             // https://github.com/microsoft/node-pty/issues/78
             if (this.lastCmd && sData.startsWith(this.lastCmd)) {
