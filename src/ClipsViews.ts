@@ -331,7 +331,13 @@ export default class ClipsViews {
     this.updateOnVisibleD.dispose();
   }
 
-  registerOpenCommands() {
+  registerCommands() {
+    const disposables = this.registerOpenCommands();
+    disposables.push(this.registerUpdateCommand());
+    return disposables;
+  }
+
+  private registerOpenCommands() {
     const disposables: vscode.Disposable[] = [];
     for (const name of viewNames) {
       disposables.push(
@@ -347,5 +353,17 @@ export default class ClipsViews {
       );
     }
     return disposables;
+  }
+
+  private registerUpdateCommand() {
+    return vscode.commands.registerCommand('clips-ide.update-view', () => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor && editor.document.uri.scheme === uriScheme) {
+        const name = editor.document.uri.path;
+        if (name in this.views) {
+          this.views[name as ViewName]?.update();
+        }
+      }
+    });
   }
 }

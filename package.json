@@ -120,6 +120,13 @@
 				"category": "CLIPS Options",
 				"title": "Set Strategy...",
 				"enablement": "clips-ide.terminalOpen"
+			},
+			{
+				"command": "clips-ide.update-view",
+				"category": "CLIPS",
+				"title": "Update View",
+				"enablement": "resourceScheme == clips && clips-ide.terminalOpen",
+				"icon": "$(refresh)"
 			}
 		],
 		"menus": {
@@ -140,6 +147,11 @@
 				{
 					"submenu": "clips-ide.menu",
 					"when": "resourceLangId == clips && clips-ide.terminalOpen",
+					"group": "clips"
+				},
+				{
+					"command": "clips-ide.update-view",
+					"when": "resourceScheme == clips && clips-ide.terminalOpen",
 					"group": "clips"
 				}
 			],

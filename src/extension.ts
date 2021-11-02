@@ -160,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(cmdD);
   });
 
-  const viewsD = views.registerOpenCommands();
+  const viewsD = views.registerCommands();
 
   const strategies = [
     'Breadth',
