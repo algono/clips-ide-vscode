@@ -292,6 +292,11 @@
 					],
 					"default": "off",
 					"description": "Specifies the level of logging it outputs."
+				},
+				"clips.updateViews": {
+					"type": "boolean",
+					"default": "true",
+					"description": "Controls whether views should be automatically updated after each command."
 				}
 			}
 		}

@@ -17,7 +17,12 @@ function createRepl() {
   state.clips = clips;
   state.instances.push(clips);
 
-  clips.onCommand(() => clips === state.clips && state.views?.updateViews());
+  clips.onCommand(
+    () =>
+      clips === state.clips &&
+      vscode.workspace.getConfiguration('clips').get<boolean>('updateViews') &&
+      state.views?.updateViews()
+  );
   clips.onClose(() => {
     // Remove REPL from instances list if it is being closed
     state.instances = state.instances.filter((i) => i !== clips);
