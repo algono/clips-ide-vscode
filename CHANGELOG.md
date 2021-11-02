@@ -1,5 +1,21 @@
 # Change Log
 
+## [1.2.0] - 2-11-2021
+
+- Added - Show progress bar when updating views is taking longer than usual (more than a second)
+
+- Added - Setting to set a custom path for the CLIPS executable
+
+- Added - Setting to set the default strategy used by CLIPS when each session starts
+
+- Added - Command to set the strategy for the current session
+
+- Added - Button for updating each view manually
+
+- Added - Setting to toggle views auto updating their state after each command
+
+- Fixed - Error message not showing up if the CLIPS executable is not found (in Linux)
+
 ## [1.1.0] - 31-10-2021
 
 - Fixed issue [#1](https://github.com/algono/clips-ide-vscode/issues/1) (Terminal does not work on Windows).

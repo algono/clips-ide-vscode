@@ -52,6 +52,22 @@ This extension contributes the following settings:
 
 ## Release Notes
 
+### 1.2.0
+
+Added progress bar when updating views is taking longer than usual (more than a second)
+
+Added setting to set a custom path for the CLIPS executable
+
+Added setting to set the default strategy used by CLIPS when each session starts
+
+Added command to set the strategy for the current session
+
+Added button for updating each view manually
+
+Added setting to toggle views auto updating their state after each command
+
+Fixed error message not showing up if the CLIPS executable is not found (in Linux)
+
 ### 1.1.0
 
 The extension finally works on Windows :tada:
