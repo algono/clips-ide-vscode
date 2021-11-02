@@ -42,13 +42,13 @@ This extension contributes the following settings:
 
 - `clips.defaultEnvironmentViews`: Selection of which views should be opened whenever the `Open CLIPS Environment` command is used (the `facts` and `agenda` views are enabled by default).
 
+![Settings Animation](media/clips-settings.gif)
+
 - `clips.defaultStrategy`: Specifies the default strategy used by CLIPS when running. (This value will only be set on startup) (`depth` by default).
 
 - `clips.logLevel`: Sets the log level for the extension (`off` by default). Only useful for _testing/debugging_ purposes.
 
 - `clips.updateViews`: Controls whether views should be automatically updated after each command (`true` by default).
-
-![Settings Animation](media/clips-settings.gif)
 
 ## Release Notes
 
