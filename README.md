@@ -46,6 +46,8 @@ This extension contributes the following settings:
 
 - `clips.logLevel`: Sets the log level for the extension (`off` by default). Only useful for _testing/debugging_ purposes.
 
+- `clips.updateViews`: Controls whether views should be automatically updated after each command (`true` by default).
+
 ![Settings Animation](media/clips-settings.gif)
 
 ## Release Notes
