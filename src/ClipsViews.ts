@@ -144,9 +144,7 @@ export default class ClipsViews {
     })();
   }
 
-  private launchUpdateProgress() {
-    const keys = Object.keys(this.views);
-
+  private launchUpdateProgress(keys = Object.keys(this.views)) {
     if (!keys || keys.length <= 0) {
       return;
     }
@@ -361,6 +359,7 @@ export default class ClipsViews {
       if (editor && editor.document.uri.scheme === uriScheme) {
         const name = editor.document.uri.path;
         if (name in this.views) {
+          this.launchUpdateProgress([name]);
           this.views[name as ViewName]?.update();
         }
       }
