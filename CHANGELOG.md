@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.2.1] - 15-04-2023
+
+- [Dependabot] - Updated project dependencies to fix "minimatch ReDoS vulnerability" from the "minimatch" package (dev dependency)
+
 ## [1.2.0] - 2-11-2021
 
 - Added - Show progress bar when updating views is taking longer than usual (more than a second)
