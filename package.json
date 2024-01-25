@@ -3,7 +3,7 @@
 	"displayName": "CLIPS",
 	"description": "Provides an IDE-like experience for the CLIPS programming language inside VSCode",
 	"icon": "media/clipslogo.png",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"publisher": "algono",
 	"license": "MIT",
 	"homepage": "https://github.com/algono/clips-ide-vscode",
@@ -287,6 +287,7 @@
 				"clips.logLevel": {
 					"enum": [
 						"off",
+						"error",
 						"log",
 						"verbose"
 					],

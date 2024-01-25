@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.2.2] - 25-01-2024
+
+- Added notice about the extension being **UNMAINTAINED**
+
+- Fixed - Logs not being shown on VSCode's output channel
+
+- Added - New log level: "error"
+
 ## [1.2.1] - 15-04-2023
 
 - [Dependabot] - Updated project dependencies to fix "minimatch ReDoS vulnerability" from the "minimatch" package (dev dependency)

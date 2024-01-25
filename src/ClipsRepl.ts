@@ -127,7 +127,7 @@ export default class ClipsRepl {
         };
 
         const error = (ex: unknown) => {
-          console.error('ERROR: ', ex);
+          logger.logError('ERROR: ', ex);
           vscode.window.showErrorMessage(
             'Fatal error. Check if CLIPS is installed.'
           );

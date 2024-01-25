@@ -1,5 +1,7 @@
 # CLIPS IDE
 
+> **NOTE:** This extension is currently **UNMAINTAINED**. Feel free to fork it and make your own version.
+
 The **CLIPS IDE** extension provides an IDE-like experience for the [**CLIPS**](http://www.clipsrules.net/) programming language inside Visual Studio Code.
 
 ![Screenshot](media/vscode-clips-ide.png)
@@ -51,6 +53,16 @@ This extension contributes the following settings:
 - `clips.updateViews`: Controls whether views should be automatically updated after each command (`true` by default).
 
 ## Release Notes
+
+## 1.2.2
+
+Fixed logs not being shown on VSCode's output channel
+
+Added new log level: "error"
+
+## 1.2.1
+
+Updated project dependencies
 
 ### 1.2.0
 
