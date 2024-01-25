@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.2.3] - 25-01-2024
+
+- Fixed - Only open the output channel when logging an error
+
 ## [1.2.2] - 25-01-2024
 
 - Added notice about the extension being **UNMAINTAINED**
