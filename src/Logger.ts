@@ -9,9 +9,12 @@ function getLogLevel(): LogLevel | undefined {
   return vscode.workspace.getConfiguration('clips').get('logLevel');
 }
 
-function logToOutputChannel(message: string): void {
+function logToOutputChannel(message: string, show: boolean = false): void {
   outputChannel.appendLine(message);
-  outputChannel.show();
+
+  if (show) {
+    outputChannel.show();
+  }
 }
 
 export function log(...args: Parameters<Console['log']>): void {
@@ -33,7 +36,7 @@ export function logError(...args: Parameters<Console['error']>): void {
   console.error(...args);
   console.log(...args);
 
-  logToOutputChannel(args.join(' '));
+  logToOutputChannel(args.join(' '), true);
 }
 
 export function logVerbose(...args: Parameters<Console['log']>): void {
